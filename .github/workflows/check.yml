@@ -23,7 +23,7 @@ jobs:
             git make gcc pkgconf \
             qt6-base qt6-webengine qt6-webchannel md4c tomlplusplus
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -38,6 +38,15 @@ jobs:
       - name: Report the version
         # Cheap, and it catches the describe-to-version path breaking, which
         # nothing else here would notice.
+        #
+        # The platform variables are needed because --version builds a
+        # QApplication before it parses arguments, so it aborts on a machine
+        # with no display like any other mode. They are set on this step alone
+        # and deliberately not on the job: `make check` has to keep proving
+        # that test/run.sh arranges its own headless environment.
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QT_QPA_PLATFORMTHEME: ""
         run: ./galley --version
 
       - name: Test
