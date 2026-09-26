@@ -21,6 +21,7 @@ One pass around that circle is a **round**.
 - [doc/ARCHITECTURE.md](doc/ARCHITECTURE.md) — how it is built
 - [doc/ROUNDS-AND-GIT.md](doc/ROUNDS-AND-GIT.md) — how diffs work, and how to set your book up
 - [doc/ROADMAP.md](doc/ROADMAP.md) — what is next
+- [CONTRIBUTING.md](CONTRIBUTING.md) — how to build, test and send a patch
 
 ## Build
 
@@ -63,6 +64,8 @@ the tip of the repository, `PKGBUILD.release` builds a tagged version.
 
 ## Tests
 
+[![check](https://github.com/latecompile/galley/actions/workflows/check.yml/badge.svg)](https://github.com/latecompile/galley/actions/workflows/check.yml)
+
 ```sh
 make check
 ```
@@ -72,6 +75,10 @@ the fixture book in `test/book` and compares both that and every chapter's
 block boundaries against committed expected output.
 [`test/README.md`](test/README.md) says what each fixture chapter is for, and
 how to regenerate the expected files when a change to them is deliberate.
+
+It needs no display and no network, and CI runs the same two commands on an
+Arch container. [`CONTRIBUTING.md`](CONTRIBUTING.md) is the rest of what a
+patch needs to know.
 
 ## The project file
 
