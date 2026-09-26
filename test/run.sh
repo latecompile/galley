@@ -28,6 +28,14 @@ if [ ! -x "$galley" ]; then
     exit 1
 fi
 
+# --check and --blocks open no window, but they still build a QApplication,
+# which aborts outright on a machine with no display — and the Qt GTK platform
+# theme aborts even under the offscreen platform. Both are forced here so the
+# test behaves the same in a container, over ssh and on a desktop.
+QT_QPA_PLATFORM=offscreen
+QT_QPA_PLATFORMTHEME=
+export QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME
+
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
