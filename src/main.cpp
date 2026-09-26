@@ -84,10 +84,57 @@ bool openForWindow(Project *project, const QString &asked, QString *chosen)
     }
 }
 
+// The terminal modes. Every one of them reports to stdout and opens no
+// window, but they are still reached through a QApplication, which aborts —
+// silently, with nothing on stdout or stderr — when there is no display to
+// connect to. Scanned before Qt is touched, because by the time the parser
+// could tell us the process has already died.
+const char *const kTerminalModes[] = {
+    "check", "brief", "blocks", "html", "dispatch", "proof", "agents",
+    "version", "help", "V", "h",
+};
+
+bool wantsTerminalMode(int argc, char **argv)
+{
+    for (int i = 1; i < argc; ++i) {
+        QByteArray arg(argv[i]);
+        if (!arg.startsWith('-'))
+            continue;
+        arg = arg.mid(arg.startsWith("--") ? 2 : 1);
+        const int eq = arg.indexOf('=');
+        if (eq >= 0)
+            arg.truncate(eq);
+        for (const char *mode : kTerminalModes)
+            if (arg == mode)
+                return true;
+    }
+    return false;
+}
+
+// A terminal mode runs offscreen, always. It has no window to put anywhere,
+// and the alternative is connecting to whatever display happens to be around
+// — which means `galley --check` aborts over ssh and in a container while
+// working on a desktop, and that is the wrong way round for the command that
+// is also the regression test.
+//
+// Unconditional on purpose. Reading DISPLAY is not enough: a desktop session
+// exports QT_QPA_PLATFORM (Hyprland sets `wayland;xcb`), and inheriting that
+// into a headless CLI run is not somebody being deliberate. The GTK platform
+// theme goes too — it opens its own display connection and aborts even under
+// the offscreen platform.
+void runOffscreen()
+{
+    qputenv("QT_QPA_PLATFORM", "offscreen");
+    qputenv("QT_QPA_PLATFORMTHEME", "");
+}
+
 } // namespace
 
 int main(int argc, char **argv)
 {
+    if (wantsTerminalMode(argc, argv))
+        runOffscreen();
+
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
     QApplication app(argc, argv);

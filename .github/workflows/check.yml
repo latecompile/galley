@@ -37,19 +37,11 @@ jobs:
 
       - name: Report the version
         # Cheap, and it catches the describe-to-version path breaking, which
-        # nothing else here would notice.
-        #
-        # The platform variables are needed because --version builds a
-        # QApplication before it parses arguments, so it aborts on a machine
-        # with no display like any other mode. They are set on this step alone
-        # and deliberately not on the job: `make check` has to keep proving
-        # that test/run.sh arranges its own headless environment.
-        env:
-          QT_QPA_PLATFORM: offscreen
-          QT_QPA_PLATFORMTHEME: ""
+        # nothing else here would notice. It is also the narrowest test there
+        # is of a terminal mode starting at all where there is no display.
         run: ./galley --version
 
       - name: Test
-        # run.sh forces the offscreen platform itself, so this needs no display
-        # and no xvfb.
+        # No display and no xvfb: galley puts its own terminal modes offscreen,
+        # and this container is where that gets proved.
         run: make check
