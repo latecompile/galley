@@ -1,0 +1,10 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+  <qresource prefix="/">
+    <file>index.html</file>
+    <file>app.js</file>
+    <file>reading.css</file>
+    <file>review.css</file>
+    <file>print.css</file>
+  </qresource>
+</RCC>

@@ -1,0 +1,659 @@
+/* Review surface. The same rendered page with markup affordances live:
+   a hover target per block, highlights over commented ranges, and a margin
+   column of notes. None of it exists in reading mode. */
+
+/* ── block affordance ────────────────────────────────────────────────── */
+
+body[data-mode="review"] #content > * {
+  position: relative;
+}
+
+body[data-mode="review"] #content > *:hover::before {
+  content: "";
+  position: absolute;
+  left: -1.6rem;
+  top: 0.15em;
+  width: 3px;
+  height: calc(100% - 0.3em);
+  background: var(--accent);
+  opacity: 0.45;
+  border-radius: 2px;
+}
+
+body[data-mode="review"] #content { cursor: text; }
+
+/* ── highlights ──────────────────────────────────────────────────────── */
+
+#content mark.gl {
+  background: color-mix(in srgb, var(--yellow) 22%, transparent);
+  border-bottom: 2px solid var(--yellow);
+  color: inherit;
+  padding: 0.05em 0;
+  cursor: pointer;
+  border-radius: 2px 2px 0 0;
+}
+#content mark.gl[data-status="sent"] {
+  background: color-mix(in srgb, var(--muted) 25%, transparent);
+  border-bottom-color: var(--muted);
+}
+#content mark.gl[data-status="carried"] {
+  background: color-mix(in srgb, var(--red) 18%, transparent);
+  border-bottom-color: var(--red);
+}
+#content mark.gl.active {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  border-bottom-color: var(--accent);
+}
+
+/* ── margin cards ────────────────────────────────────────────────────── */
+
+#margin { font-family: system-ui, sans-serif; }
+body[data-mode="read"] #margin .card { opacity: 0; pointer-events: none; }
+body[data-mode="read"] #margin .dot { display: block; }
+body[data-mode="review"] #margin .dot { display: none; }
+
+#margin .card {
+  position: absolute;
+  left: 1.6rem;
+  width: calc(100% - 2.4rem);
+  background: var(--bg-dark);
+  border: 1px solid var(--bg-light);
+  border-left: 3px solid var(--yellow);
+  border-radius: 5px;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--fg-dim);
+  transition: opacity 0.12s, border-color 0.12s;
+  cursor: pointer;
+}
+#margin .card[data-status="sent"] { border-left-color: var(--muted); opacity: 0.6; }
+#margin .card[data-status="carried"] { border-left-color: var(--red); }
+#margin .card:hover, #margin .card.active { border-color: var(--accent); }
+#margin .card .meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+#margin .card .note { color: var(--fg); }
+#margin .card .refs { margin-top: 0.3rem; font-size: 0.68rem; color: var(--cyan); word-break: break-all; }
+#margin .card .actions { margin-top: 0.4rem; display: none; gap: 0.3rem; }
+#margin .card.active .actions { display: flex; }
+#margin .card .actions button { font-size: 0.65rem; padding: 0.15rem 0.45rem; }
+
+#margin .dot {
+  position: absolute;
+  left: 0.4rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--yellow);
+  opacity: 0.6;
+}
+
+/* ── composer ────────────────────────────────────────────────────────── */
+
+#composer {
+  position: fixed;
+  z-index: 60;
+  width: 26rem;
+  max-width: calc(100vw - 2rem);
+  background: var(--bg-dark);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
+  padding: 0.7rem;
+  font-family: system-ui, sans-serif;
+}
+#composer[hidden] { display: none; }
+#composer-quote {
+  font-family: "Liberation Serif", Georgia, serif;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--fg-dim);
+  border-left: 2px solid var(--yellow);
+  padding-left: 0.6rem;
+  margin-bottom: 0.55rem;
+  max-height: 6em;
+  overflow: hidden;
+}
+#composer-row { display: flex; gap: 0.4rem; margin-top: 0.45rem; }
+#composer-row select { flex: 0 0 8rem; }
+#composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+#composer-actions .hint { flex: 1; font-size: 0.66rem; color: var(--muted); }
+
+/* ── panes: round, history, dispatch, diff ───────────────────────────── */
+
+.pane.sheet {
+  font-family: system-ui, sans-serif;
+  padding: 2rem 2.5rem 6rem;
+  max-width: 58rem;
+  margin: 0 auto;
+  width: 100%;
+}
+.sheet h2 {
+  font-size: 1.15rem;
+  color: var(--fg-bright);
+  margin: 0 0 0.3rem;
+}
+.sheet .sub { font-size: 0.8rem; color: var(--muted); margin-bottom: 1.6rem; }
+.sheet h3 {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-dim);
+  margin: 1.8rem 0 0.6rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--bg-light);
+  font-family: "Liberation Mono", monospace;
+  text-transform: none;
+}
+.sheet .empty { color: var(--muted); font-size: 0.85rem; padding: 2rem 0; }
+
+.entry {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr;
+  gap: 0.7rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--bg-dark);
+  font-size: 0.82rem;
+}
+.entry .idx { color: var(--muted); font-variant-numeric: tabular-nums; }
+.entry blockquote {
+  margin: 0 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 2px solid var(--bg-light);
+  color: var(--fg-dim);
+  font-family: "Liberation Serif", Georgia, serif;
+}
+.entry .note { color: var(--fg); }
+.entry .refs { margin-top: 0.3rem; font-size: 0.72rem; color: var(--cyan); }
+.entry .tools { margin-top: 0.4rem; display: flex; gap: 0.3rem; }
+.entry .tools button { font-size: 0.68rem; padding: 0.15rem 0.5rem; }
+.entry[data-status="sent"] { opacity: 0.55; }
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 0;
+  border-top: 1px solid var(--bg-light);
+  margin-top: 1.5rem;
+}
+.bar .grow { flex: 1; }
+
+.warn {
+  background: color-mix(in srgb, var(--yellow) 12%, transparent);
+  border: 1px solid var(--yellow);
+  color: var(--fg-bright);
+  border-radius: 5px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.78rem;
+  margin-bottom: 1rem;
+}
+
+pre.brief, pre.diff {
+  background: var(--bg-darker);
+  border: 1px solid var(--bg-light);
+  border-radius: 6px;
+  padding: 0.9rem 1rem;
+  font-family: "Liberation Mono", ui-monospace, monospace;
+  font-size: 0.74rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  max-height: 32rem;
+  overflow-y: auto;
+  white-space: pre;
+  color: var(--fg-dim);
+}
+pre.diff .add { color: var(--green); }
+pre.diff .del { color: var(--red); }
+pre.diff .hunk { color: var(--cyan); }
+pre.diff .file { color: var(--fg-bright); font-weight: 700; }
+
+.roundrow {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  gap: 0.7rem;
+  padding: 0.55rem 0.4rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--bg-dark);
+  border-radius: 0;
+  font-size: 0.82rem;
+  font-family: inherit;
+  color: var(--fg-dim);
+  text-align: left;
+  cursor: pointer;
+}
+.roundrow:hover { color: var(--fg-bright); background: var(--bg-dark); }
+.roundrow:focus {
+  outline: none;
+  color: var(--fg-bright);
+  background: var(--bg-dark);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.roundrow .num { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 700; }
+.roundrow .state { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.roundrow .grow { flex: 1; }
+
+/* ── help overlay ────────────────────────────────────────────────────── */
+
+#topright { display: flex; align-items: center; gap: 0.5rem; }
+#btn-help {
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--bg-darker);
+  color: var(--muted);
+  font-weight: 700;
+  line-height: 1;
+}
+#btn-help:hover { color: var(--fg-bright); border-color: var(--accent); }
+
+#help {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: color-mix(in srgb, var(--bg-darker) 78%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+#help[hidden] { display: none; }
+
+#help-panel {
+  background: var(--bg-dark);
+  border: 1px solid var(--bg-light);
+  border-radius: 10px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+  font-family: system-ui, sans-serif;
+  width: 46rem;
+  max-width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+}
+#help-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.2rem;
+  border-bottom: 1px solid var(--bg-light);
+}
+#help-panel h2 { margin: 0; font-size: 0.95rem; color: var(--fg-bright); }
+#help-close { background: none; border: none; font-size: 1.2rem; color: var(--muted); padding: 0 0.3rem; }
+#help-close:hover { color: var(--fg-bright); }
+
+#help-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem 2.2rem;
+  padding: 1.1rem 1.2rem 0.6rem;
+}
+@media (max-width: 40rem) { #help-cols { grid-template-columns: minmax(0, 1fr); } }
+
+#help-cols h3 {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--accent);
+  margin: 0.7rem 0 0.5rem;
+}
+#help-cols dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.34rem 0.9rem;
+  margin: 0;
+  font-size: 0.78rem;
+}
+#help-cols dt { white-space: nowrap; }
+#help-cols dd { margin: 0; color: var(--fg-dim); }
+
+#help-panel footer {
+  padding: 0.7rem 1.2rem 0.9rem;
+  border-top: 1px solid var(--bg-light);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.3em;
+  text-align: center;
+  font-family: "Liberation Mono", ui-monospace, monospace;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--fg-bright);
+  background: var(--bg-darker);
+  border: 1px solid var(--bg-light);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0.05em 0.35em;
+}
+
+/* ── review hint ─────────────────────────────────────────────────────── */
+
+#hint {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 1.2rem;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-bottom: 1px solid var(--bg-light);
+  font-family: system-ui, sans-serif;
+  font-size: 0.75rem;
+  color: var(--fg-dim);
+}
+#hint[hidden] { display: none; }
+#hint span { flex: 1; }
+#hint button { background: none; border: none; color: var(--muted); font-size: 1rem; padding: 0 0.3rem; }
+#hint button:hover { color: var(--fg-bright); }
+
+#notices { display: inline-flex; gap: 0.35rem; min-width: 0; }
+#notices .notice {
+  font-size: 0.68rem;
+  color: var(--bg-darker);
+  background: var(--orange, #a2734b);
+  padding: 0.08rem 0.4rem;
+  border-radius: 3px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 22rem;
+}
+
+/* ── outcomes ────────────────────────────────────────────────────────── */
+
+.entry.outcome { align-items: start; }
+
+.badge {
+  display: inline-block;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  margin-bottom: 0.45rem;
+  color: var(--bg-darker);
+  background: var(--muted);
+}
+.badge.applied  { background: var(--green); }
+.badge.partial  { background: var(--yellow); }
+.badge.declined { background: var(--orange, #a2734b); }
+/* An unanswered comment is not a result. It must not look like one. */
+.badge.sent, .badge.open, .badge.carried {
+  background: transparent;
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+
+.entry.outcome[data-status="applied"] { opacity: 0.75; }
+
+.agentnote {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg-dark);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+  font-size: 0.78rem;
+}
+.agentnote .who {
+  flex: 0 0 auto;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--accent);
+  padding-top: 0.15rem;
+  font-weight: 700;
+}
+.agentnote .said { color: var(--fg-dim); }
+
+/* ── references ──────────────────────────────────────────────────────── */
+
+.refs-editor { margin-top: 0.4rem; }
+
+.refs-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.35rem; }
+.refs-none { font-size: 0.7rem; color: var(--muted); font-style: italic; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  max-width: 100%;
+  padding: 0.1rem 0.2rem 0.1rem 0.45rem;
+  border-radius: 3px;
+  border: 1px solid var(--bg-light);
+  background: var(--bg-darker);
+  font-size: 0.7rem;
+  font-family: "Liberation Mono", ui-monospace, monospace;
+  color: var(--fg-dim);
+}
+.chip .what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip .drop {
+  background: none;
+  border: none;
+  padding: 0 0.15rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+.chip .drop:hover { color: var(--red); border-color: transparent; }
+
+.chip.file { border-color: var(--accent); }
+.chip.dir  { border-color: var(--accent); }
+.chip.dir .what::after { content: '/'; opacity: 0.6; }
+.chip.link { border-color: var(--cyan); color: var(--cyan); }
+/* A reference to a path that is not there is worse than no reference at all,
+   because the agent will follow it, find nothing, and not mention it. */
+.chip.missing { border-color: var(--red); color: var(--red); text-decoration: line-through; }
+
+.refs-row { display: flex; gap: 0.35rem; }
+.refs-row input { flex: 1; font-size: 0.72rem; }
+.refs-row button { flex: 0 0 auto; font-size: 0.7rem; }
+
+.refs-slot:not(:empty) {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--bg-dark);
+  border-radius: 5px;
+}
+
+/* ── stale comments ──────────────────────────────────────────────────── */
+
+.badge.stale { background: var(--yellow); }
+
+.stale-note {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.74rem;
+  color: var(--fg-dim);
+}
+.entry[data-stale="true"] blockquote { opacity: 0.5; text-decoration: line-through; }
+
+#margin .card[data-status="stale"] { border-left-color: var(--yellow); }
+#margin .card[data-status="stale"] .meta::after { content: 'stale'; color: var(--yellow); }
+
+/* ── search ──────────────────────────────────────────────────────────── */
+
+#pane-search { padding: 0; }
+
+#search-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.8rem 2.5rem;
+  background: var(--bg-dark);
+  border-bottom: 1px solid var(--bg-light);
+}
+#search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-family: system-ui, sans-serif;
+  font-size: 1rem;
+  color: var(--fg-bright);
+  padding: 0.2rem 0;
+}
+#search-input::placeholder { color: var(--muted); }
+#search-count {
+  font-family: system-ui, sans-serif;
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+#search-results {
+  font-family: system-ui, sans-serif;
+  padding: 1rem 2.5rem 6rem;
+  max-width: 62rem;
+}
+#search-results h3 {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 1.4rem 0 0.4rem;
+}
+#search-results h3:first-child { margin-top: 0; }
+#search-results .empty { color: var(--muted); font-size: 0.85rem; padding: 1.5rem 0; }
+
+.hit {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  padding: 0.45rem 0.6rem;
+  cursor: pointer;
+}
+.hit:hover { background: var(--bg-dark); }
+.hit:focus { outline: none; background: var(--bg-dark); box-shadow: inset 2px 0 0 var(--accent); }
+.hit .where {
+  display: block;
+  font-family: "Liberation Mono", ui-monospace, monospace;
+  font-size: 0.62rem;
+  color: var(--muted);
+  margin-bottom: 0.15rem;
+}
+.hit .line {
+  display: block;
+  font-family: "Liberation Serif", Georgia, serif;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--fg-dim);
+}
+.hit mark {
+  background: color-mix(in srgb, var(--yellow) 30%, transparent);
+  color: var(--fg-bright);
+  border-radius: 2px;
+  padding: 0 0.1em;
+}
+
+/* ── selecting what to send ──────────────────────────────────────────── */
+
+.grouphead {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 1.8rem 0 0.6rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--bg-light);
+}
+.grouphead h3 {
+  flex: 1;
+  margin: 0;
+  border: none;
+  padding: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.grouphead button { font-size: 0.68rem; padding: 0.15rem 0.5rem; flex: 0 0 auto; }
+
+.entry .pick {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  cursor: pointer;
+  user-select: none;
+}
+.entry .pick input { width: 0.85rem; height: 0.85rem; accent-color: var(--accent); }
+.entry .pick .n { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 0.8rem; }
+.entry:has(.pick input:not(:checked)) { opacity: 0.45; }
+.badge.deferred { background: transparent; color: var(--muted); border: 1px solid var(--muted); }
+
+/* Where you were, kept visible while the caret is back in the search box. */
+.hit.current { background: var(--bg-dark); box-shadow: inset 2px 0 0 var(--muted); }
+.hit.current .line { color: var(--fg); }
+.hit.current:focus { box-shadow: inset 2px 0 0 var(--accent); }
+
+/* ── about ───────────────────────────────────────────────────────────── */
+
+#help-panel footer { display: flex; align-items: center; gap: 1rem; }
+#help-panel footer span { flex: 1; }
+#help-about { font-size: 0.7rem; padding: 0.2rem 0.6rem; }
+
+#about {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: color-mix(in srgb, var(--bg-darker) 82%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+#about[hidden] { display: none !important; }
+
+#about-panel {
+  background: var(--bg-dark);
+  border: 1px solid var(--bg-light);
+  border-radius: 10px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+  font-family: system-ui, sans-serif;
+  text-align: center;
+  padding: 2rem 2.4rem 1.6rem;
+  width: 22rem;
+  max-width: 100%;
+}
+#about-panel h2 { margin: 0.8rem 0 0.2rem; font-size: 1.3rem; color: var(--fg-bright); }
+#about-panel p { margin: 0.2rem 0; font-size: 0.8rem; color: var(--fg-dim); }
+#about-version {
+  font-family: "Liberation Mono", ui-monospace, monospace;
+  font-size: 0.72rem !important;
+  color: var(--muted) !important;
+}
+#about-panel .about-what { margin-top: 0.9rem; color: var(--fg); }
+#about-panel .about-who { margin-top: 0.9rem; }
+#about-panel .about-links { font-size: 0.74rem; }
+#about-panel a { color: var(--accent); text-decoration: none; }
+#about-panel a:hover { text-decoration: underline; }
+#about-close { margin-top: 1.3rem; }
+#help-about kbd { margin-left: 0.3rem; font-size: 0.62rem; }
+
+.bookrefs { margin: -0.8rem 0 0.4rem; }
+.bookrefs button { font-size: 0.7rem; padding: 0.2rem 0.6rem; }

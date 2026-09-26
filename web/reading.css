@@ -1,0 +1,353 @@
+/* Reading surface. A book, not a web page: one measured column, generous
+   leading, and nothing in the margin unless the review mode puts it there. */
+
+:root {
+  --bg: #111c18;
+  --bg-dark: #0c1512;
+  --bg-darker: #090f0d;
+  --bg-light: #23372b;
+  --fg: #c1c497;
+  --fg-dim: #81b8a8;
+  --fg-bright: #f7e8b2;
+  --accent: #509475;
+  --sel: #32473b;
+  --muted: #53685b;
+  --red: #ff5345;
+  --yellow: #e5c736;
+  --green: #549e6a;
+  --cyan: #2dd5b7;
+  --blue: #509475;
+  --magenta: #d2689c;
+
+  /* The column code and tables get. Sized so that a wide fenced block — the
+     widest in the book this was built against is 105 characters — fits
+     without a horizontal scrollbar. */
+  --measure: 54rem;
+  /* Prose stops short of it: past roughly 75 characters a line is tiring to
+     read, and a book is mostly prose. Code has no such limit and every extra
+     column saves a horizontal scroll. */
+  --prose: 35rem;
+  --sidebar: 16rem;
+  --margin-col: 19rem;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Liberation Serif", Georgia, serif;
+  font-size: 16px;
+  overflow: hidden;
+}
+
+body {
+  display: grid;
+  grid-template-columns: var(--sidebar) 1fr;
+}
+
+button, select, input, textarea {
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: var(--fg);
+  background: var(--bg-light);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+}
+button { cursor: pointer; font-family: system-ui, sans-serif; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--bg-darker); font-weight: 600; }
+textarea, input { width: 100%; background: var(--bg-darker); border: 1px solid var(--bg-light); }
+textarea:focus, input:focus, select:focus { outline: none; border-color: var(--accent); }
+
+/* ── sidebar ─────────────────────────────────────────────────────────── */
+
+#sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--bg-darker);
+  border-right: 1px solid var(--bg-light);
+  font-family: system-ui, sans-serif;
+}
+
+#booktitle {
+  padding: 0.9rem 1rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  border-bottom: 1px solid var(--bg-light);
+}
+
+#toc { flex: 1; overflow-y: auto; padding: 0.4rem 0; }
+
+#toc a {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.28rem 1rem;
+  font-size: 0.8rem;
+  color: var(--fg-dim);
+  text-decoration: none;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+}
+#toc a:hover { background: var(--bg-dark); color: var(--fg); }
+#toc a.current { color: var(--fg-bright); border-left-color: var(--accent); background: var(--bg-dark); }
+#toc a .n { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 1.4em; }
+#toc a .dot {
+  margin-left: auto;
+  color: var(--yellow);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+#roundbar {
+  border-top: 1px solid var(--bg-light);
+  padding: 0.7rem 1rem 0.8rem;
+  font-family: system-ui, sans-serif;
+}
+#roundline { font-size: 0.75rem; color: var(--fg-dim); margin-bottom: 0.5rem; }
+#roundline b { color: var(--fg-bright); }
+#roundactions { display: flex; gap: 0.35rem; }
+#roundactions button { flex: 1; padding: 0.3rem 0.2rem; font-size: 0.72rem; }
+
+/* ── main ────────────────────────────────────────────────────────────── */
+
+main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+
+#topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 1.2rem;
+  border-bottom: 1px solid var(--bg-light);
+  background: var(--bg-dark);
+  font-family: system-ui, sans-serif;
+  font-size: 0.8rem;
+}
+#crumb {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  color: var(--fg-bright);
+  font-weight: 600;
+}
+#chapter-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#unmapped {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--bg-darker);
+  background: var(--yellow);
+  padding: 0.05rem 0.35rem;
+  border-radius: 3px;
+  font-weight: 700;
+}
+#modeswitch { display: flex; background: var(--bg-darker); border-radius: 5px; padding: 2px; }
+#modeswitch button { background: transparent; border: none; padding: 0.25rem 0.8rem; color: var(--muted); }
+#modeswitch button.on { background: var(--bg-light); color: var(--fg-bright); }
+
+.pane { flex: 1; min-height: 0; overflow-y: auto; }
+.pane[hidden] { display: none !important; }
+
+#scroller {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr minmax(0, var(--measure)) var(--margin-col) 1fr;
+  padding: 3rem 1.5rem 60vh;
+}
+#content { grid-column: 2; min-width: 0; }
+#margin { grid-column: 3; position: relative; }
+
+/* Too narrow to carry text and notes side by side: give the whole width to
+   the prose. Highlights stay; the round view is where the notes are read. */
+/* Below this there is no room for prose and notes side by side. */
+@media (max-width: 76rem) {
+  #scroller { grid-template-columns: minmax(0, 1fr); padding: 2rem 1.25rem 60vh; }
+  #content { grid-column: 1; }
+  #margin { display: none; }
+}
+
+/* ── book typography ─────────────────────────────────────────────────── */
+
+#content { line-height: 1.62; }
+#content > * { margin: 0 0 1.1em; }
+
+/* Text is held to a readable measure; anything that would otherwise scroll
+   sideways is allowed the whole column. */
+#content > p,
+#content > ul,
+#content > ol,
+#content > blockquote,
+#content > h1,
+#content > h2,
+#content > h3,
+#content > h4,
+#content > hr,
+#content > .footnotes {
+  max-width: var(--prose);
+}
+
+#content h1, #content h2, #content h3, #content h4 {
+  font-family: system-ui, sans-serif;
+  color: var(--fg-bright);
+  line-height: 1.25;
+  margin: 2.2em 0 0.7em;
+}
+#content > h1:first-child { margin-top: 0; }
+#content h1 { font-size: 1.9rem; letter-spacing: -0.01em; }
+#content h2 { font-size: 1.32rem; }
+#content h3 { font-size: 1.08rem; }
+#content h4 { font-size: 0.95rem; color: var(--fg-dim); }
+
+#content a { color: var(--cyan); text-decoration: none; border-bottom: 1px solid var(--bg-light); }
+#content strong { color: var(--fg-bright); }
+#content em { color: var(--fg-dim); }
+
+#content ul, #content ol { padding-left: 1.4em; }
+#content li { margin-bottom: 0.35em; }
+#content li.task { list-style: none; margin-left: -1.2em; }
+
+#content blockquote {
+  border-left: 2px solid var(--accent);
+  padding-left: 1em;
+  color: var(--fg-dim);
+  font-style: italic;
+}
+
+#content code {
+  font-family: "Liberation Mono", ui-monospace, monospace;
+  font-size: 0.86em;
+  background: var(--bg-darker);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  color: var(--cyan);
+}
+#content pre {
+  background: var(--bg-darker);
+  border: 1px solid var(--bg-light);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+#content pre code { background: none; padding: 0; color: var(--fg); font-size: 0.8rem; }
+
+#content table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+#content th, #content td { border-bottom: 1px solid var(--bg-light); padding: 0.4em 0.7em; text-align: left; }
+#content th { color: var(--fg-bright); font-family: system-ui, sans-serif; font-size: 0.78rem; }
+
+#content hr { border: none; border-top: 1px solid var(--bg-light); margin: 2.4em 0; }
+#content img { max-width: 100%; border-radius: 4px; }
+
+::selection { background: var(--sel); color: var(--fg-bright); }
+
+/* ── toast ───────────────────────────────────────────────────────────── */
+
+#toast {
+  position: fixed;
+  bottom: 1.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-light);
+  border: 1px solid var(--accent);
+  color: var(--fg-bright);
+  font-family: system-ui, sans-serif;
+  font-size: 0.8rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  z-index: 50;
+  max-width: 44rem;
+}
+#toast[data-level="error"] { border-color: var(--red); color: var(--red); }
+
+/* ── footnotes ───────────────────────────────────────────────────────── */
+
+#content sup.fnref {
+  font-size: 0.7em;
+  line-height: 0;
+  vertical-align: super;
+  font-variant-numeric: tabular-nums;
+}
+#content sup.fnref a {
+  color: var(--accent);
+  border-bottom: none;
+  padding: 0 0.12em;
+  font-weight: 700;
+}
+#content sup.fnref a:hover { text-decoration: underline; }
+
+#content .footnotes {
+  margin-top: 3.5rem;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--fg-dim);
+}
+#content .footnotes hr {
+  border: none;
+  border-top: 1px solid var(--bg-light);
+  width: 8rem;
+  margin: 0 0 1.4rem;
+}
+#content .footnotes ol { padding-left: 1.5em; }
+#content .footnotes li { margin-bottom: 0.9em; }
+#content .footnotes li::marker { color: var(--accent); font-weight: 700; }
+#content .footnotes p { margin: 0 0 0.5em; }
+
+#content a.fnback {
+  margin-left: 0.4em;
+  border-bottom: none;
+  color: var(--muted);
+  text-decoration: none;
+}
+#content a.fnback:hover { color: var(--accent); }
+
+/* Jumping to a footnote and back is invisible without this — the target is
+   one line among many, and the reader loses their place. */
+#content .flash {
+  animation: gl-flash 1.2s ease-out;
+  border-radius: 3px;
+}
+@keyframes gl-flash {
+  from { background: color-mix(in srgb, var(--accent) 45%, transparent); }
+  to   { background: transparent; }
+}
+
+/* ── write mode ──────────────────────────────────────────────────────── */
+
+#pane-write { display: flex; justify-content: center; padding: 2rem 1.5rem; }
+
+#writer {
+  width: 100%;
+  max-width: 46rem;
+  height: 100%;
+  resize: none;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--fg);
+  font-family: "Liberation Mono", ui-monospace, monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  padding: 0;
+  tab-size: 2;
+}
+#writer:focus { outline: none; border: none; }
+
+#saved {
+  font-family: system-ui, sans-serif;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+#saved[data-state="unsaved"] { color: var(--yellow); }
+#saved[data-state="saving"] { color: var(--accent); }
+#saved[hidden] { display: none; }

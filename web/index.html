@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Galley</title>
+<link rel="stylesheet" href="reading.css">
+<link rel="stylesheet" href="review.css">
+</head>
+<body data-mode="read">
+
+<aside id="sidebar">
+  <header id="booktitle">…</header>
+  <nav id="toc"></nav>
+  <footer id="roundbar">
+    <div id="roundline">Round 1 · no comments</div>
+    <div id="roundactions">
+      <button id="btn-round" title="Review the open round (r)">Round</button>
+      <button id="btn-history" title="Past rounds">History</button>
+      <button id="btn-build" title="Build the PDF (b)">PDF</button>
+    </div>
+  </footer>
+</aside>
+
+<main>
+  <header id="topbar">
+    <div id="crumb"><span id="chapter-title"></span><span id="unmapped" hidden
+      title="Source ranges unavailable for this file — comments still work, anchored by quoted text.">unmapped</span><span id="notices"></span></div>
+    <div id="topright">
+      <span id="saved" hidden></span>
+      <div id="modeswitch">
+        <button data-mode="read" class="on">Read</button>
+        <button data-mode="review">Review</button>
+        <button data-mode="write">Write</button>
+      </div>
+      <button id="btn-help" title="Keys (?)">?</button>
+    </div>
+  </header>
+
+  <div id="hint" hidden>
+    <span>Select any text and press <kbd>c</kbd> to comment on it.</span>
+    <button id="hint-dismiss" title="Dismiss">×</button>
+  </div>
+
+  <section id="pane-book" class="pane">
+    <div id="scroller">
+      <article id="content"></article>
+      <div id="margin"></div>
+    </div>
+  </section>
+
+  <section id="pane-write" class="pane" hidden>
+    <textarea id="writer" spellcheck="false"></textarea>
+  </section>
+
+  <section id="pane-search" class="pane" hidden>
+    <div id="search-bar">
+      <input id="search-input" type="text" spellcheck="false"
+             placeholder="Search the whole book" autocomplete="off">
+      <span id="search-count"></span>
+    </div>
+    <div id="search-results"></div>
+  </section>
+
+  <section id="pane-round" class="pane" hidden></section>
+  <section id="pane-history" class="pane" hidden></section>
+  <section id="pane-dispatch" class="pane" hidden></section>
+  <section id="pane-diff" class="pane" hidden></section>
+</main>
+
+<div id="composer" hidden>
+  <div id="composer-quote"></div>
+  <textarea id="composer-note" rows="4" placeholder="What is wrong with this?"></textarea>
+  <div id="composer-refs"></div>
+  <div id="composer-row">
+    <select id="composer-scope">
+      <option value="sentence">sentence</option>
+      <option value="paragraph">paragraph</option>
+      <option value="section">section</option>
+      <option value="footnote">footnote</option>
+      <option value="file">whole chapter</option>
+    </select>
+  </div>
+  <div id="composer-actions">
+    <span class="hint">Ctrl+Enter to save · Esc to discard</span>
+    <button id="composer-cancel">Cancel</button>
+    <button id="composer-save" class="primary">Save</button>
+  </div>
+</div>
+
+<div id="help" hidden>
+  <div id="help-panel">
+    <header>
+      <h2>Keys</h2>
+      <button id="help-close" title="Close (Esc)">×</button>
+    </header>
+    <div id="help-cols">
+      <section>
+        <h3>Moving</h3>
+        <dl>
+          <dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>scroll down / up</dd>
+          <dt><kbd>Ctrl</kbd>+<kbd>d</kbd> <kbd>Ctrl</kbd>+<kbd>u</kbd></dt><dd>half page</dd>
+          <dt><kbd>Space</kbd> <kbd>⇧Space</kbd></dt><dd>page down / up</dd>
+          <dt><kbd>g</kbd><kbd>g</kbd> <kbd>G</kbd></dt><dd>start / end of chapter</dd>
+          <dt><kbd>h</kbd> <kbd>l</kbd></dt><dd>previous / next chapter</dd>
+          <dt><kbd>1</kbd>…<kbd>9</kbd></dt><dd>jump to chapter</dd>
+        </dl>
+      </section>
+      <section>
+        <h3>Searching</h3>
+        <dl>
+          <dt><kbd>/</kbd></dt><dd>search the whole book</dd>
+          <dt><kbd>n</kbd> <kbd>N</kbd></dt><dd>next / previous match</dd>
+        </dl>
+      </section>
+      <section>
+        <h3>Reviewing</h3>
+        <dl>
+          <dt><kbd>v</kbd></dt><dd>review mode, and back</dd>
+          <dt><kbd>c</kbd></dt><dd>comment on the selected text</dd>
+          <dt><kbd>Ctrl</kbd>+<kbd>↵</kbd></dt><dd>save the comment</dd>
+        </dl>
+      </section>
+      <section>
+        <h3>Writing</h3>
+        <dl>
+          <dt><kbd>i</kbd></dt><dd>edit this chapter's Markdown</dd>
+          <dt><kbd>Ctrl</kbd>+<kbd>s</kbd></dt><dd>save without leaving</dd>
+        </dl>
+      </section>
+      <section>
+        <h3>Rounds</h3>
+        <dl>
+          <dt><kbd>r</kbd></dt><dd>the open round</dd>
+          <dt><kbd>R</kbd></dt><dd>past rounds</dd>
+          <dt><kbd>d</kbd></dt><dd>dispatch to an agent</dd>
+        </dl>
+      </section>
+      <section>
+        <h3>General</h3>
+        <dl>
+          <dt><kbd>o</kbd></dt><dd>open a different book</dd>
+          <dt><kbd>p</kbd></dt><dd>render the book to PDF</dd>
+          <dt><kbd>Esc</kbd></dt><dd>back out one layer</dd>
+          <dt><kbd>?</kbd></dt><dd>this list</dd>
+          <dt><kbd>Ctrl</kbd>+<kbd>l</kbd></dt><dd>log pane</dd>
+          <dt><kbd>q</kbd></dt><dd>quit</dd>
+        </dl>
+      </section>
+    </div>
+    <footer>
+      <span>Comments are never applied until you dispatch a round.</span>
+      <button id="help-about">About Galley <kbd>a</kbd></button>
+    </footer>
+  </div>
+</div>
+
+<div id="about" hidden>
+  <div id="about-panel">
+    <svg viewBox="0 0 128 128" width="72" height="72" aria-hidden="true">
+      <rect width="128" height="128" rx="24" fill="#101010"/>
+      <path d="M24 28h58v72H24z" fill="#f5f1e8"/>
+      <path d="M35 46h36M35 62h30M35 78h22" fill="none" stroke="#101010"
+            stroke-width="7" stroke-linecap="round"/>
+      <path d="M33 62h34" fill="none" stroke="#c2562f" stroke-width="7" stroke-linecap="round"/>
+      <rect x="92" y="52" width="14" height="30" rx="5" fill="#c2562f"/>
+    </svg>
+    <h2>Galley</h2>
+    <p id="about-version">—</p>
+    <p class="about-what">A review loop for books written in Markdown.</p>
+    <p class="about-who">
+      by <a href="https://github.com/latecompile" data-external>Late Compile</a>
+    </p>
+    <p class="about-links">
+      <a href="https://github.com/latecompile/galley" data-external>github.com/latecompile/galley</a>
+    </p>
+    <button id="about-close">Close</button>
+  </div>
+</div>
+
+<div id="toast" hidden></div>
+
+<script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

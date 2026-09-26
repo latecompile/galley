@@ -1,0 +1,76 @@
+/* The proof copy. Paper is white whatever the screen is doing, and a PDF that
+   arrives dark is a PDF nobody can print. */
+
+@page { size: A4; }
+
+html, body {
+  margin: 0;
+  background: #fff;
+  color: #1a1a1a;
+  font-family: "Liberation Serif", Georgia, serif;
+  font-size: 11pt;
+  line-height: 1.5;
+}
+
+.chapter { break-before: page; }
+.chapter:first-of-type { break-before: auto; }
+
+h1, h2, h3, h4 {
+  font-family: "Liberation Sans", Helvetica, sans-serif;
+  color: #000;
+  line-height: 1.25;
+  break-after: avoid;
+}
+h1 { font-size: 20pt; margin: 0 0 1.2em; }
+h2 { font-size: 14pt; margin: 1.8em 0 0.6em; }
+h3 { font-size: 12pt; margin: 1.5em 0 0.5em; }
+h4 { font-size: 11pt; margin: 1.3em 0 0.4em; color: #333; }
+
+p, ul, ol, blockquote { margin: 0 0 0.85em; orphans: 2; widows: 2; }
+li { margin-bottom: 0.25em; }
+li.task { list-style: none; margin-left: -1.2em; }
+
+a { color: #14506e; text-decoration: none; }
+
+blockquote {
+  border-left: 2pt solid #bbb;
+  margin-left: 0;
+  padding-left: 1em;
+  color: #444;
+  font-style: italic;
+}
+
+code {
+  font-family: "Liberation Mono", monospace;
+  font-size: 0.86em;
+  background: #f2f2f2;
+  padding: 0.05em 0.3em;
+  border-radius: 2pt;
+}
+pre {
+  background: #f7f7f7;
+  border: 0.5pt solid #ddd;
+  border-radius: 3pt;
+  padding: 0.7em 0.9em;
+  font-size: 8.5pt;
+  line-height: 1.4;
+  /* A split code block is far worse than a short page. */
+  break-inside: avoid;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+pre code { background: none; padding: 0; font-size: inherit; }
+
+table { border-collapse: collapse; width: 100%; font-size: 9.5pt; break-inside: avoid; }
+th, td { border-bottom: 0.5pt solid #ccc; padding: 0.35em 0.6em; text-align: left; }
+th { font-family: "Liberation Sans", Helvetica, sans-serif; font-size: 9pt; }
+
+hr { border: none; border-top: 0.5pt solid #ccc; margin: 2em 0; }
+img { max-width: 100%; }
+
+sup.fnref { font-size: 0.7em; vertical-align: super; line-height: 0; }
+sup.fnref a { color: #14506e; font-weight: bold; }
+.footnotes { margin-top: 2.5em; font-size: 9pt; color: #333; break-before: avoid; }
+.footnotes hr { width: 6em; margin: 0 0 1em; }
+.footnotes li { margin-bottom: 0.5em; }
+a.fnback { color: #888; }

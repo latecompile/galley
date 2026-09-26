@@ -1,0 +1,10 @@
+build/
+*.o
+moc_*.cpp
+qrc_*.cpp
+galley
+compile_commands.json
+packaging/src/
+packaging/pkg/
+packaging/*.pkg.tar.*
+.galley/

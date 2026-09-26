@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Galley
+GenericName=Markdown Book Reviewer
+Comment=Read a book written in Markdown, mark it up, hand it to an agent
+Exec=galley %f
+Icon=galley
+Terminal=false
+Categories=Office;Publishing;TextEditor;
+MimeType=inode/directory;
+Keywords=markdown;book;review;proof;editing;agent;
+StartupWMClass=galley

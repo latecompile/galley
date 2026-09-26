@@ -1,0 +1,32 @@
+# Maintainer: Late Compile <eduardoliver@gmail.com>
+#
+# Builds a tagged release. Rename to PKGBUILD in its own AUR repository
+# (pkgname galley) once a version has been tagged and pushed.
+
+pkgname=galley
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Read a book written in Markdown, mark it up, hand it to an agent"
+arch=('x86_64' 'aarch64')
+url="https://github.com/latecompile/galley"
+license=('MIT')
+depends=('qt6-base' 'qt6-webengine' 'qt6-webchannel' 'md4c' 'hicolor-icon-theme'
+         'gcc-libs' 'glibc')
+makedepends=('make' 'gcc' 'pkgconf' 'tomlplusplus')
+optdepends=(
+  'pandoc: build a book that ships its own pandoc script'
+  'git: per-round diffs and a restore point for the book under review'
+)
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SKIP')  # updpkgsums
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+  make VERSION="$pkgver"
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver"
+  make DESTDIR="$pkgdir" PREFIX=/usr install
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

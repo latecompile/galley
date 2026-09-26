@@ -1,0 +1,48 @@
+# Maintainer: Late Compile <eduardoliver@gmail.com>
+#
+# Tracks the tip of the repository. Galley has no tagged release yet; when it
+# does, PKGBUILD.release builds that instead and this one can stay for people
+# who want the tip.
+
+pkgname=galley-git
+pkgver=0.0.0.r0.gunknown
+pkgrel=1
+pkgdesc="Read a book written in Markdown, mark it up, hand it to an agent"
+arch=('x86_64' 'aarch64')
+url="https://github.com/latecompile/galley"
+license=('MIT')
+depends=('qt6-base' 'qt6-webengine' 'qt6-webchannel' 'md4c' 'hicolor-icon-theme'
+         'gcc-libs' 'glibc')
+makedepends=('git' 'make' 'gcc' 'pkgconf' 'tomlplusplus')
+optdepends=(
+  'pandoc: build a book that ships its own pandoc script'
+  'git: per-round diffs and a restore point for the book under review'
+)
+provides=('galley')
+conflicts=('galley')
+source=("$pkgname::git+https://github.com/latecompile/galley.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/$pkgname"
+  local described
+  # `git describe | sed` would succeed even with no tags, because sed does;
+  # the describe has to be tested on its own.
+  if described=$(git describe --long --tags --abbrev=7 2>/dev/null); then
+    printf '%s' "$described" | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
+  else
+    printf '0.0.0.r%s.g%s' \
+      "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+  fi
+}
+
+build() {
+  cd "$srcdir/$pkgname"
+  make VERSION="$pkgver"
+}
+
+package() {
+  cd "$srcdir/$pkgname"
+  make DESTDIR="$pkgdir" PREFIX=/usr install
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
