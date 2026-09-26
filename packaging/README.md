@@ -15,9 +15,8 @@ header-only makedepend and is not required at runtime.
 
 Three things have to exist first, and none of them can be done from here:
 
-1. **A public repository.** `url` and `source` in `PKGBUILD` point at
-   `https://github.com/latecompile/galley`. Until that exists and has been
-   pushed, the PKGBUILD only builds from a local path.
+1. ~~**A public repository.**~~ Done — `url` and `source` point at
+   `https://github.com/latecompile/galley`, which is live and tagged.
 2. **An AUR account** with an SSH public key uploaded, and a matching entry
    in `~/.ssh/config`:
 
@@ -49,7 +48,8 @@ show stale metadata.
 `0.0.0.r<commits>.g<sha>` until the first tag and `<tag>.r<n>.g<sha>` after,
 so it keeps sorting correctly once releases start.
 
-`PKGBUILD.release` builds `galley` from a tagged tarball. Use it once a
-version is tagged: set `pkgver`, run `updpkgsums` to fill in the checksum, and
-push it to a separate `galley` AUR repository. The two can coexist — one for
-people who want releases, one for people who want the tip.
+`PKGBUILD.release` builds `galley` from a tagged tarball. v0.1.0 is tagged,
+`pkgver` is set to it, and the checksum has been filled in with `updpkgsums`
+against the published tarball — so it is ready to push to a separate `galley`
+AUR repository. Re-run `updpkgsums` on every version bump. The two can coexist
+— one for people who want releases, one for people who want the tip.

@@ -7,6 +7,10 @@ compile_commands.json
 packaging/src/
 packaging/pkg/
 packaging/*.pkg.tar.*
+# the bare clone makepkg keeps for the git source, and the release tarball
+# updpkgsums downloads to checksum
+packaging/galley-git/
+packaging/*.tar.gz
 .galley/
 # The fixture book's project file is the exception: its spine is committed so
 # `make check` reads the same chapters in the same order everywhere. Negating

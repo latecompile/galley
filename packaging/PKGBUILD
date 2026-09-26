@@ -1,11 +1,15 @@
 # Maintainer: Late Compile <eduardoliver@gmail.com>
 #
-# Tracks the tip of the repository. Galley has no tagged release yet; when it
-# does, PKGBUILD.release builds that instead and this one can stay for people
-# who want the tip.
+# Tracks the tip of the repository. PKGBUILD.release builds the tagged release
+# instead — v0.1.0 onwards — and the two are meant to coexist: this one for
+# people who want the tip, that one for people who want a version.
+#
+# pkgver below is only a placeholder. makepkg rewrites it from pkgver() on
+# every build, so it goes stale the moment anything is committed, and the
+# value that matters is the one in .SRCINFO at push time.
 
 pkgname=galley-git
-pkgver=0.0.0.r0.gunknown
+pkgver=0.1.0.r5.ge8ed14b
 pkgrel=1
 pkgdesc="Read a book written in Markdown, mark it up, hand it to an agent"
 arch=('x86_64' 'aarch64')

@@ -18,7 +18,7 @@ optdepends=(
   'git: per-round diffs and a restore point for the book under review'
 )
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('SKIP')  # updpkgsums
+sha256sums=('c82dc25702044b73c2350ec65055172d55e5311fd7bf044ce363e2ca040a3845')
 
 build() {
   cd "$srcdir/$pkgname-$pkgver"
