@@ -1,0 +1,14 @@
+part3-inline/08-tables-and-html.md — 12 blocks, mapped
+
+   0     # Tables and Raw HTML
+   1     A table is one top-level block however many rows it has.
+   2     | key | what it does | |---|---| | `j` | scroll down | | `k` | scroll up | | `c` ...
+   3     Alignment markers do not change the block count:
+   4     | left | centre | right | |:---|:---:|---:| | a | b | c |
+   5     A task list, also from the GitHub dialect:
+   6     - [x] scan the source - [ ] reconcile the counts - [ ] write the brief
+   7     A raw HTML block is one block:
+   8     <div class="note"> <p>Raw HTML passes through untouched.</p> </div>
+   9     An HTML comment is a block of its own:
+  10     <!-- this comment is a block, and renders as nothing visible -->
+  11     And a paragraph after it, to be sure the comment ended.

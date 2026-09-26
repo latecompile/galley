@@ -8,3 +8,8 @@ packaging/src/
 packaging/pkg/
 packaging/*.pkg.tar.*
 .galley/
+# The fixture book's project file is the exception: its spine is committed so
+# `make check` reads the same chapters in the same order everywhere. Negating
+# the directory is what makes the file reachable — git will not re-include a
+# file whose parent directory is excluded.
+!/test/book/.galley/

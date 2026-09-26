@@ -38,7 +38,7 @@ QRC_SRC  := $(BUILD)/qrc_web.cpp
 QRC_OBJ  := $(BUILD)/qrc_web.o
 QRC_DEPS := $(shell sed -n 's:.*<file>\(.*\)</file>.*:web/\1:p' $(QRC) 2>/dev/null)
 
-.PHONY: all clean run install uninstall
+.PHONY: all clean run install uninstall check
 all: $(TARGET)
 
 $(TARGET): $(OBJS) $(MOC_OBJS) $(QRC_OBJ)
@@ -61,6 +61,11 @@ $(QRC_OBJ): $(QRC_SRC)
 
 $(BUILD):
 	@mkdir -p $(BUILD)
+
+# The regression test: md4c's parse and BlockScanner's independent scan of the
+# same bytes, reconciled over test/book. UPDATE=1 rewrites the expected output.
+check: $(TARGET)
+	@test/run.sh
 
 install: $(TARGET)
 	install -Dm755 $(TARGET) $(DESTDIR)$(PREFIX)/bin/galley

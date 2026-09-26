@@ -1,0 +1,21 @@
+part1-blocks/02-headings-and-breaks.md — 19 blocks, mapped
+
+   0     # Headings and Breaks
+   1     ## ATX, at every depth
+   2     ### Three
+   3     #### Four
+   4     ##### Five
+   5     ###### Six
+   6     ####### Seven hashes is not a heading, it is a paragraph.
+   7     #No space after the hash is not a heading either.
+   8     Setext, underlined with equals ==============================
+   9     Setext, underlined with a single dash -
+  10     A paragraph that runs straight into a heading with no blank line between them
+  11     # is interrupted here
+  12     ---
+  13     That was a thematic break. So is this one, spaced out:
+  14     * * *
+  15     And this one, with underscores:
+  16     ___
+  17     A line of dashes directly under a paragraph is a setext underline rather than a t...
+  18     The heading above ends that paragraph; this one begins a new one.

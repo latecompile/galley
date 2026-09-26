@@ -1,0 +1,12 @@
+part2-footnotes/06-edge-cases.md — 9 blocks + 1 footnotes, mapped
+
+   0     # Footnote Edge Cases
+   1     A reference with no definition is left exactly as written[^missing], because rewr...
+   2     Footnote syntax inside a code span stays literal: `[^label]` is text here, and so...
+   3     ```markdown [^inside-a-fence]: this is a listing about footnotes, not a footnote ...
+   4     A real reference still works in the same chapter[^real].
+   5     Link reference definitions are not footnotes and render nothing at all:
+   6     A definition followed by prose on the next line is a real paragraph, though:
+   7     [mixed]: https://example.invalid and this sentence keeps it one.
+   8     Links resolve through those definitions: [Galley][galley] and [Arch][arch].
+   9 fn  [^real]: A short definition, on one line.

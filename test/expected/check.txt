@@ -1,0 +1,13 @@
+  ok    README.md                                           6 blocks
+  ok    part1-blocks/01-fenced-code.md                      11 blocks
+  ok    part1-blocks/02-headings-and-breaks.md              19 blocks
+  ok    part1-blocks/03-lists.md                            19 blocks
+  ok    part1-blocks/04-blockquotes.md                      16 blocks
+  ok    part1-blocks/05-indented-code.md                    6 blocks
+  UNMAP part1-blocks/06-known-unmapped.md                   11 blocks
+  ok    part2-footnotes/05-definitions.md                   5 blocks
+  ok    part2-footnotes/06-edge-cases.md                    9 blocks
+  ok    part3-inline/07-inline.md                           9 blocks
+  ok    part3-inline/08-tables-and-html.md                  12 blocks
+
+11 chapters, 1 unmapped, 0 failed

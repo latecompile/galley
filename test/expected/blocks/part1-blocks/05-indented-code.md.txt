@@ -1,0 +1,8 @@
+part1-blocks/05-indented-code.md — 6 blocks, mapped
+
+   0     # Indented Code
+   1     An indented code block with no blank line in it is a single block, and both readi...
+   2     $ galley --check test/book 30 chapters, 0 unmapped, 0 failed
+   3     Text between, so the two indented blocks do not run together.
+   4     $ make check
+   5     The rule that indented code follows a paragraph only after a blank line also hold...

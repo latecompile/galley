@@ -1,0 +1,18 @@
+part1-blocks/04-blockquotes.md — 16 blocks, mapped
+
+   0     # Blockquotes
+   1     A run of quoted lines is one block.
+   2     > The first line of the quote. > The second line of the quote. > The third.
+   3     Lazy continuation: a line with no marker still belongs to the quote above it.
+   4     > The marker appears only on this line and this line continues it anyway and so d...
+   5     A blank line ends a quote, so these are two blocks and not one:
+   6     > First quote.
+   7     > Second quote.
+   8     Nested quotes stay within the one block:
+   9     > Outer. > > > Inner. > > Still inner. > > Outer again.
+  10     A quote holding a list and a fence:
+  11     > - one > - two > > ```sh > echo quoted > ```
+  12     A heading interrupts a quote's lazy continuation rather than joining it:
+  13     > The quote ends at the next line
+  14     # because a heading interrupts
+  15     That heading is its own block.

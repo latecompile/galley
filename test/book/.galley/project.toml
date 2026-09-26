@@ -1,0 +1,15 @@
+# The fixture book Galley tests itself against. See test/README.md.
+#
+# The spine is written out rather than inferred, so `make check` compares the
+# same chapters in the same order on every machine.
+
+name = "The Galley Fixture Book"
+
+spine = [
+  "README.md",
+  "part1-blocks",
+  "part2-footnotes",
+  "part3-inline",
+]
+
+references = []

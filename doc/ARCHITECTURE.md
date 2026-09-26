@@ -130,7 +130,9 @@ Then the two are reconciled **by count**:
 Failing closed matters more than succeeding: a wrong byte range points an
 agent at the wrong prose, while a missing one costs only the source-block
 excerpt in the brief. `galley --check` runs this reconciliation over every
-chapter and is the project's regression test. `galley --blocks FILE` prints
+chapter and is the project's regression test; `make check` runs it over the
+fixture book in `test/` and diffs the result, block boundaries included,
+against committed expected output. `galley --blocks FILE` prints
 the block index and source of each block, which is how you debug an anchor
 rather than guessing at one.
 

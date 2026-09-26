@@ -1,0 +1,13 @@
+part1-blocks/01-fenced-code.md — 11 blocks, mapped
+
+   0     # Fenced Code
+   1     A fence swallows blank lines. This is the case a scanner that splits on blank lin...
+   2     ```sh make clean make ```
+   3     That listing is one block, not three.
+   4     A tilde fence carries backticks without escaping them:
+   5     ~~~markdown ```sh echo "a fence inside a fence" ``` ~~~
+   6     A longer fence closes only on one at least as long, so a shorter run of backticks...
+   7     ````text ``` still inside ``` ````
+   8     An info string on a backtick fence may not itself contain a backtick, so the line...
+   9     An unclosed fence runs to the end of the file, and everything after it is code wh...
+  10     ```c int main(void) { return 0; } # not a heading - not a list

@@ -61,6 +61,18 @@ yours, not the package's.
 Arch packaging lives in [`packaging/`](packaging/README.md): `PKGBUILD` tracks
 the tip of the repository, `PKGBUILD.release` builds a tagged version.
 
+## Tests
+
+```sh
+make check
+```
+
+No framework, no network. It runs Galley's block-mapping reconciliation over
+the fixture book in `test/book` and compares both that and every chapter's
+block boundaries against committed expected output.
+[`test/README.md`](test/README.md) says what each fixture chapter is for, and
+how to regenerate the expected files when a change to them is deliberate.
+
 ## The project file
 
 On first open Galley writes `.galley/project.toml` into the book and never
