@@ -23,6 +23,8 @@ LIBS     := $(shell pkg-config --libs $(PKGS))
 
 BUILD := build
 TARGET := galley
+PROFILE_TEST := $(BUILD)/agent-profiles-test
+MODEL_TEST := $(BUILD)/model-edges-test
 
 SRCS := $(wildcard src/*.cpp)
 OBJS := $(patsubst src/%.cpp,$(BUILD)/%.o,$(SRCS))
@@ -62,9 +64,15 @@ $(QRC_OBJ): $(QRC_SRC)
 $(BUILD):
 	@mkdir -p $(BUILD)
 
+$(PROFILE_TEST): test/agent_profiles.cpp $(BUILD)/AgentProfiles.o | $(BUILD)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(shell pkg-config --libs Qt6Core)
+
+$(MODEL_TEST): test/model_edges.cpp $(BUILD)/AgentProfiles.o $(BUILD)/ModelDiscovery.o $(BUILD)/moc_ModelDiscovery.o | $(BUILD)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(shell pkg-config --libs Qt6Qml)
+
 # The regression test: md4c's parse and BlockScanner's independent scan of the
 # same bytes, reconciled over test/book. UPDATE=1 rewrites the expected output.
-check: $(TARGET)
+check: $(TARGET) $(PROFILE_TEST) $(MODEL_TEST)
 	@test/run.sh
 
 install: $(TARGET)

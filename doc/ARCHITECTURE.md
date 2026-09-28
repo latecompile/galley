@@ -336,8 +336,56 @@ Everything interesting is in the brief, which is plain Markdown so that the
 author can read exactly what is being sent before sending it — the dispatch
 pane shows it in full, and `galley --brief` prints it without dispatching.
 
-Agent profiles are a user-editable table; `{prompt}`, `{brief}` and `{root}`
-are substituted into an argv list. Adding an agent is three lines of TOML.
+Agent profiles are a user-editable table. Alongside the command, optional
+`model` and `effort` keys pin a CLI choice. `{prompt}`, `{brief}`, `{root}`,
+`{model}` and `{effort}` are substituted into the argv list. If a model or
+effort is empty, its placeholder argument is omitted; the value-taking flag
+before it is omitted too (`--model`/`-m` for models, and the corresponding
+effort flag, including Codex's `-c`). A model-aware command therefore still
+runs against the CLI default when its profile leaves either value unset.
+Expansion scans the command template once; placeholders inside a supplied
+prompt, path or model value remain literal.
+
+The dispatch pane lists the profile name, adding model and effort only when
+they are not already present as complete parts of its normalized name. Its
+**Add a model** panel deals only in installed CLIs Galley has an edits-only command
+for. Adding creates a new table at the end of
+`~/.config/galley/agents.toml`; it never serializes the parsed document back
+out, so comments, ordering and hand formatting above the new block remain
+byte-for-byte intact. The block carries a dated `Added by Galley's model
+picker` comment. An exact agent/model/effort match reuses the existing
+profile; name collisions receive a numeric suffix. Every existing TOML key
+reserves its name, including unfinished profiles with no command. A malformed
+file is reported before anything is appended. The append checks both the
+write and flush; a short write is rolled back to the original file length.
+
+Model catalogs belong to the CLIs, not Galley. Refresh starts one `QProcess`
+asynchronously, closes its stdin and kills it after 15 seconds:
+
+| CLI | discovery | model / effort arguments |
+|---|---|---|
+| Codex | `codex debug models`, JSON entries whose visibility is `list` | `-m`; `-c model_reasoning_effort="…"` |
+| Grok | `grok models`, including its `(default)` marker | `-m`; `--reasoning-effort` with free text |
+| Claude | aliases and effort levels parsed from `claude --help`; full model names remain valid | `--model`; `--effort` |
+| OpenCode | `opencode models --refresh`, one `provider/model` per line | `-m`; `--variant` with free text |
+| Gemini | no list; `gemini --help` verifies `-m`, then the user enters a name | `-m`; no effort argument |
+
+Only the Refresh button or `galley --models AGENT` runs discovery. Successful
+catalogs are stored with their UTC refresh time in
+`~/.cache/galley/models.json`. Opening the picker reads that cache. A failed
+refresh leaves a successful older entry in place and reports stderr or the
+timeout; model entry remains free text, so a broken catalog command never
+prevents creating a usable profile. `galley --add-model AGENT --model MODEL
+[--effort EFFORT]` uses the same append path as the UI.
+Cache writes use `QSaveFile` and report open, write or commit failures; the
+fresh choices remain usable even when they cannot be saved, and `--models`
+returns a failing exit status. Codex efforts are per model; Claude's effort
+levels apply to the CLI and to full model names as well as aliases.
+
+The picker remembers model and effort inputs per CLI across redraws and
+refreshes. A revision counter and the picker instance guard preview replies,
+so an older response cannot enable Add after the model is cleared or replace
+the preview for a newer choice.
 
 Because these run non-interactively, an agent that pauses to ask permission
 cannot be answered — it reports back having changed nothing. Profiles

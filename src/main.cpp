@@ -3,6 +3,7 @@
 #include "Brief.h"
 #include "Document.h"
 #include "MainWindow.h"
+#include "ModelDiscovery.h"
 #include "Project.h"
 #include "Round.h"
 #include "Theme.h"
@@ -10,6 +11,7 @@
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QFileDialog>
+#include <QEventLoop>
 #include <QMessageBox>
 #include <QSettings>
 #include <QDir>
@@ -91,6 +93,7 @@ bool openForWindow(Project *project, const QString &asked, QString *chosen)
 // could tell us the process has already died.
 const char *const kTerminalModes[] = {
     "check", "brief", "blocks", "html", "dispatch", "proof", "agents",
+    "models", "add-model",
     "version", "help", "V", "h",
 };
 
@@ -174,6 +177,26 @@ int main(int argc, char **argv)
         QStringLiteral("agents"),
         QStringLiteral("List agent profiles, adding any newly installed, then exit."));
     parser.addOption(agentsOption);
+    QCommandLineOption modelsOption(
+        QStringLiteral("models"),
+        QStringLiteral("Refresh and list models reported by an installed agent CLI."),
+        QStringLiteral("agent"));
+    parser.addOption(modelsOption);
+    QCommandLineOption addModelOption(
+        QStringLiteral("add-model"),
+        QStringLiteral("Append a model profile for an installed agent CLI."),
+        QStringLiteral("agent"));
+    parser.addOption(addModelOption);
+    QCommandLineOption modelOption(
+        QStringLiteral("model"),
+        QStringLiteral("Model name for --add-model."),
+        QStringLiteral("name"));
+    parser.addOption(modelOption);
+    QCommandLineOption effortOption(
+        QStringLiteral("effort"),
+        QStringLiteral("Optional reasoning effort for --add-model."),
+        QStringLiteral("level"));
+    parser.addOption(effortOption);
     QCommandLineOption proofOption(
         QStringLiteral("proof"),
         QStringLiteral("Render the book to .galley/proof.pdf and exit."));
@@ -194,6 +217,44 @@ int main(int argc, char **argv)
     parser.addOption(agentOption);
     parser.process(app);
 
+    // Both commands concern the user's Galley profile file rather than a
+    // particular book, so they run before any project is opened.
+    if (parser.isSet(modelsOption)) {
+        ModelDiscovery discovery;
+        QEventLoop wait;
+        QJsonObject result;
+        QObject::connect(&discovery, &ModelDiscovery::finished, [&](const QString &json) {
+            result = QJsonDocument::fromJson(json.toUtf8()).object();
+            wait.quit();
+        });
+        discovery.refresh(parser.value(modelsOption));
+        if (result.isEmpty())
+            wait.exec();
+        QTextStream(result.contains(QStringLiteral("error")) ? stderr : stdout)
+            << ModelDiscovery::format(result);
+        return result.contains(QStringLiteral("error")) || result.contains(QStringLiteral("cacheError"))
+            ? 1 : 0;
+    }
+
+    if (parser.isSet(addModelOption)) {
+        if (!parser.isSet(modelOption)) {
+            QTextStream(stderr) << "galley: --add-model requires --model\n";
+            return 1;
+        }
+        bool existed = false;
+        QString error;
+        const QString name = AgentProfiles::addModel(parser.value(addModelOption),
+                                                     parser.value(modelOption),
+                                                     parser.value(effortOption),
+                                                     &existed, &error);
+        if (name.isEmpty()) {
+            QTextStream(stderr) << "galley: " << error << "\n";
+            return 1;
+        }
+        QTextStream(stdout) << (existed ? "existing " : "added    ") << name << "\n";
+        return 0;
+    }
+
     // Every flag below is a terminal mode: it reports to stdout and has no
     // window to put a dialog in, so those keep the strict behaviour of taking
     // the current directory and failing loudly.
@@ -211,7 +272,7 @@ int main(int argc, char **argv)
         const auto profiles = AgentProfiles::load();
         const QString desktop = AgentProfiles::omarchyDefault();
         for (auto it = profiles.begin(); it != profiles.end(); ++it)
-            out << "        " << it.key() << "\n";
+            out << "        " << AgentProfiles::label(it.value()) << "\n";
         out << "\n" << AgentProfiles::configPath() << "\n";
         if (!desktop.isEmpty() && !profiles.contains(desktop))
             out << "\nYour desktop agent is " << desktop

@@ -33,6 +33,10 @@ const S = {
   writeDirty: false,
   writeSeenAt: null,
   writeIndex: -1,
+  dispatchAgent: null,
+  modelRefresh: null,
+  modelPicker: null,
+  modelPicks: new Map(),
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -61,6 +65,11 @@ new QWebChannel(qt.webChannelTransport, (channel) => {
     S.running = pretty;
     const btn = $('#dispatch-send');
     if (btn) btn.textContent = `Running… ${pretty}`;
+  });
+  G.modelsRefreshed.connect((json) => {
+    const result = JSON.parse(json);
+    if (S.modelRefresh) S.modelRefresh(result);
+    else if (result.error || result.cacheError) toast('error', result.error || result.cacheError);
   });
 
   G.themeJson((j) => applyTheme(JSON.parse(j)));
@@ -112,6 +121,9 @@ function adoptProject(json, switched) {
     S.hits = [];
     S.refsOpen = null;
     S.chapter = -1;
+    S.dispatchAgent = null;
+    S.modelRefresh = null;
+    S.modelPicker = null;
     $('#search-input').value = '';
     $('#search-results').textContent = '';
     applyMode('read');
@@ -124,6 +136,10 @@ function adoptProject(json, switched) {
     loadChapter(0);
     if (switched) toast('ok', `Opened ${S.project.name}.`);
   });
+}
+
+function agentLabel(name) {
+  return (S.project.agentLabels && S.project.agentLabels[name]) || name;
 }
 
 /* ── theme ────────────────────────────────────────────────────────────── */
@@ -1037,7 +1053,283 @@ function entryFor(c, index, editable, redraw) {
 
 /* ── dispatch ─────────────────────────────────────────────────────────── */
 
+function modelPicker(slot, data, only) {
+  const picker = {};
+  S.modelPicker = picker;
+  let previewRevision = 0;
+  let adding = false;
+  slot.textContent = '';
+  slot.className = 'model-picker';
+
+  const title = el('div', 'model-picker-head');
+  title.appendChild(el('h3', null, 'Add a model'));
+  const close = el('button', null, 'Close');
+  close.addEventListener('click', () => {
+    S.modelRefresh = null;
+    S.modelPicker = null;
+    slot.textContent = '';
+    slot.className = '';
+  });
+  title.appendChild(close);
+  slot.appendChild(title);
+
+  if (!data.agents.length) {
+    slot.appendChild(el('div', 'empty',
+      'No model-capable agent CLI is installed on PATH.'));
+    return;
+  }
+
+  const catalogs = new Map(data.agents.map((entry) => [entry.name, entry.catalog]));
+  const controls = el('div', 'model-picker-controls');
+  const agent = document.createElement('select');
+  for (const entry of data.agents) {
+    const option = el('option', null, entry.name);
+    option.value = entry.name;
+    agent.appendChild(option);
+  }
+  controls.appendChild(agent);
+
+  const refresh = el('button', null, 'Refresh');
+  refresh.title = 'Ask this agent CLI for its current model choices';
+  controls.appendChild(refresh);
+  slot.appendChild(controls);
+
+  const body = el('div', 'model-picker-body');
+  slot.appendChild(body);
+
+  const draw = () => {
+    ++previewRevision;
+    body.textContent = '';
+    const catalog = catalogs.get(agent.value) || { models: [], effortMode: 'none' };
+    const models = catalog.models || [];
+    if (!S.modelPicks.has(agent.value)) {
+      S.modelPicks.set(agent.value, {
+        model: (models.find((model) => model.default) || {}).id || '',
+        typed: '', effort: null,
+      });
+    }
+    const pick = S.modelPicks.get(agent.value);
+    if (!pick.model && !pick.typed)
+      pick.model = (models.find((model) => model.default) || {}).id || '';
+    if (pick.model && pick.model !== '__other__'
+        && !models.some((model) => model.id === pick.model)) {
+      pick.typed = pick.model;
+      pick.model = '__other__';
+    }
+
+    const status = el('div', 'model-cache');
+    if (catalog.refreshedAt) {
+      const when = new Date(catalog.refreshedAt);
+      status.textContent = `${catalog.cached ? 'Cached' : 'Refreshed'} ${when.toLocaleString()}`;
+    } else {
+      status.textContent = 'No cached choices yet. Refresh, or enter a model name.';
+    }
+    body.appendChild(status);
+    if (catalog.refreshError)
+      body.appendChild(el('div', 'warn', catalog.refreshError));
+    if (catalog.cacheError)
+      body.appendChild(el('div', 'warn', catalog.cacheError));
+    if (catalog.message)
+      body.appendChild(el('div', 'model-note', catalog.message));
+
+    const form = el('div', 'model-form');
+    const modelLabel = el('label', null, 'Model');
+    let modelSelect = null;
+    if (models.length) {
+      modelSelect = document.createElement('select');
+      if (!models.some((model) => model.default)) {
+        const choose = el('option', null, 'Choose a model…');
+        choose.value = '';
+        choose.selected = true;
+        choose.disabled = true;
+        modelSelect.appendChild(choose);
+      }
+      models.forEach((model) => {
+        let label = model.displayName || model.id;
+        if (model.displayName && model.displayName !== model.id) label += ` — ${model.id}`;
+        if (model.default) label += ' (default)';
+        const option = el('option', null, label);
+        option.value = model.id;
+        if (model.default) option.selected = true;
+        modelSelect.appendChild(option);
+      });
+      const other = el('option', null, 'Other model…');
+      other.value = '__other__';
+      modelSelect.appendChild(other);
+      modelLabel.appendChild(modelSelect);
+      if (pick.model && models.some((model) => model.id === pick.model))
+        modelSelect.value = pick.model;
+      else if (pick.typed || pick.model === '__other__')
+        modelSelect.value = '__other__';
+      else
+        modelSelect.value = '';
+    }
+    const modelInput = document.createElement('input');
+    modelInput.type = 'text';
+    modelInput.value = pick.typed;
+    modelInput.placeholder = agent.value === 'opencode'
+      ? 'provider/model' : 'Full model name or alias';
+    modelInput.hidden = !!modelSelect && modelSelect.value !== '__other__';
+    modelLabel.appendChild(modelInput);
+    form.appendChild(modelLabel);
+
+    const effortSlot = el('div', 'effort-slot');
+    form.appendChild(effortSlot);
+    const name = el('div', 'profile-name');
+    form.appendChild(name);
+    const add = el('button', 'primary', 'Add');
+    add.disabled = true;
+    form.appendChild(add);
+    body.appendChild(form);
+
+    let effortControl = null;
+    const chosenModel = () => {
+      if (!modelSelect) return modelInput.value.trim();
+      return modelSelect.value === '__other__'
+        ? modelInput.value.trim() : modelSelect.value;
+    };
+    const chosenEffort = () => effortControl ? effortControl.value.trim() : '';
+
+    const updateName = () => {
+      const revision = ++previewRevision;
+      const model = chosenModel();
+      add.disabled = true;
+      if (adding) return;
+      if (!model) {
+        name.textContent = 'Enter a model name.';
+        return;
+      }
+      name.textContent = 'Checking profile name…';
+      G.modelProfileName(agent.value, model, chosenEffort(), (json) => {
+        if (revision !== previewRevision || S.modelPicker !== picker || !slot.isConnected) return;
+        const profile = JSON.parse(json);
+        if (profile.error || !profile.name) {
+          name.textContent = profile.error || 'Could not determine a profile name.';
+          return;
+        }
+        name.textContent = profile.exists
+          ? `Already available as ${profile.name}`
+          : `Profile: ${profile.name}`;
+        add.textContent = profile.exists ? 'Use existing' : 'Add';
+        add.disabled = false;
+      });
+    };
+
+    const updateEffort = () => {
+      effortSlot.textContent = '';
+      effortControl = null;
+      const selected = models.find((model) => model.id === chosenModel());
+      // Codex levels belong to a model; Claude levels belong to the CLI,
+      // including when the user supplies a full model name.
+      const efforts = (selected && selected.efforts && selected.efforts.length)
+        ? selected.efforts : (catalog.efforts || []);
+      if (efforts.length) {
+        const label = el('label', null, 'Reasoning effort');
+        effortControl = document.createElement('select');
+        const cliDefault = el('option', null, 'CLI default (not pinned)');
+        cliDefault.value = '';
+        effortControl.appendChild(cliDefault);
+        efforts.forEach((value) => {
+          const isDefault = selected && value === selected.defaultEffort;
+          const option = el('option', null, value + (isDefault ? ' (default)' : ''));
+          option.value = value;
+          if (isDefault) option.selected = true;
+          effortControl.appendChild(option);
+        });
+        label.appendChild(effortControl);
+        effortSlot.appendChild(label);
+        if (pick.effort !== null && (!pick.effort || efforts.includes(pick.effort)))
+          effortControl.value = pick.effort;
+      } else if (catalog.effortMode !== 'none') {
+        const label = el('label', null, 'Reasoning effort (optional)');
+        effortControl = document.createElement('input');
+        effortControl.type = 'text';
+        effortControl.placeholder = agent.value === 'opencode'
+          ? 'Provider variant, e.g. high' : 'e.g. high';
+        effortControl.value = pick.effort || '';
+        label.appendChild(effortControl);
+        effortSlot.appendChild(label);
+      }
+      if (chosenModel()) pick.effort = chosenEffort();
+      if (effortControl) effortControl.addEventListener('input', () => {
+        pick.effort = chosenEffort();
+        updateName();
+      });
+      updateName();
+    };
+
+    if (modelSelect) {
+      modelSelect.addEventListener('change', () => {
+        pick.model = modelSelect.value;
+        modelInput.hidden = modelSelect.value !== '__other__';
+        if (!modelInput.hidden) modelInput.focus();
+        updateEffort();
+      });
+    }
+    modelInput.addEventListener('input', () => {
+      pick.typed = modelInput.value;
+      updateName();
+    });
+    updateEffort();
+
+    add.addEventListener('click', () => {
+      if (add.disabled || !chosenModel()) return;
+      adding = true;
+      ++previewRevision;
+      add.disabled = true;
+      G.addModelProfile(agent.value, chosenModel(), chosenEffort(), (json) => {
+        const result = JSON.parse(json);
+        if (!result.ok) {
+          toast('error', result.error);
+          adding = false;
+          updateName();
+          return;
+        }
+        S.dispatchAgent = result.name;
+        toast('ok', result.existed
+          ? `Using existing profile ${result.label}.`
+          : `Added ${result.label} to ${result.path}.`);
+        G.projectJson((projectJson) => {
+          S.project = JSON.parse(projectJson);
+          if (S.modelPicker !== picker) return;
+          S.modelRefresh = null;
+          showDispatch(only);
+        });
+      });
+    });
+  };
+
+  agent.addEventListener('change', draw);
+  refresh.addEventListener('click', () => {
+    refresh.disabled = true;
+    refresh.textContent = 'Refreshing…';
+    const wanted = agent.value;
+    S.modelRefresh = (result) => {
+      if (result.agent !== wanted) return;
+      if (S.modelPicker !== picker || !slot.isConnected) return;
+      refresh.disabled = false;
+      refresh.textContent = 'Refresh';
+      if (result.error) {
+        const old = catalogs.get(wanted) || { models: [], effortMode: result.effortMode };
+        old.refreshError = result.error;
+        catalogs.set(wanted, old);
+        toast('error', result.error);
+      } else {
+        result.refreshError = '';
+        catalogs.set(wanted, result);
+        if (result.cacheError) toast('error', result.cacheError);
+        else toast('ok', `Refreshed ${wanted} models.`);
+      }
+      draw();
+    };
+    G.refreshModels(wanted);
+  });
+  draw();
+}
+
 function showDispatch(ids) {
+  S.modelRefresh = null;
+  S.modelPicker = null;
   const only = ids || pickedIn(S.round.comments);
   G.preflightJson((pj) => {
     const pre = JSON.parse(pj);
@@ -1075,11 +1367,12 @@ function showDispatch(ids) {
       const bar = el('div', 'bar');
       const select = el('select');
       for (const a of S.project.agents) {
-        const o = el('option', null, a);
+        const o = el('option', null, agentLabel(a));
         o.value = a;
-        if (a === S.project.defaultAgent) o.selected = true;
+        if (a === (S.dispatchAgent || S.project.defaultAgent)) o.selected = true;
         select.appendChild(o);
       }
+      select.addEventListener('change', () => { S.dispatchAgent = select.value; });
       bar.appendChild(select);
 
       // agents.toml is written once and then left alone, so an agent
@@ -1105,6 +1398,9 @@ function showDispatch(ids) {
       });
       bar.appendChild(rescan);
 
+      const pickerButton = el('button', null, 'Add a model');
+      bar.appendChild(pickerButton);
+
       bar.appendChild(el('span', 'grow'));
 
       const back = el('button', null, 'Back');
@@ -1123,6 +1419,16 @@ function showDispatch(ids) {
       });
       bar.appendChild(go);
       pane.appendChild(bar);
+
+      const pickerSlot = el('div');
+      pickerButton.addEventListener('click', () => {
+        pickerButton.disabled = true;
+        G.modelPickerJson((json) => {
+          modelPicker(pickerSlot, JSON.parse(json), only);
+          pickerButton.disabled = false;
+        });
+      });
+      pane.appendChild(pickerSlot);
 
       pane.appendChild(el('pre', 'brief', brief));
     });
@@ -1153,7 +1459,7 @@ function showHistory() {
       const row = el('button', 'roundrow');
       row.appendChild(el('span', 'num', String(r.number)));
       row.appendChild(el('span', null, `${r.count} comment${r.count === 1 ? '' : 's'}`));
-      row.appendChild(el('span', 'grow', r.agent || ''));
+      row.appendChild(el('span', 'grow', r.agent ? agentLabel(r.agent) : ''));
       row.appendChild(el('span', 'state', r.state));
       row.addEventListener('click', () => showResult(r.number, true));
       pane.appendChild(row);
@@ -1246,7 +1552,7 @@ function showResult(roundNumber, fromHistory) {
     if (s.deferred) bits.push(`${s.deferred} held back`);
 
     pane.appendChild(el('div', 'sub', sent
-      ? `${bits.join(' · ') || 'nothing to report'} · ${res.agent}`
+      ? `${bits.join(' · ') || 'nothing to report'} · ${agentLabel(res.agent)}`
       : (count
           ? `${count} comment${count === 1 ? '' : 's'}, not yet sent to an agent`
           : 'No comments yet.')));

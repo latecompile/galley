@@ -16,7 +16,7 @@ anchoring possible, and it is the thing most likely to break when anyone
 touches the scanner. See [ARCHITECTURE §4](../doc/ARCHITECTURE.md) for why it
 fails closed rather than guessing.
 
-So there are two assertions, and they are deliberately different:
+The checks cover:
 
 1. **`galley --check`** over the whole book, compared to
    [`expected/check.txt`](expected/check.txt). This catches the two readings
@@ -27,6 +27,21 @@ So there are two assertions, and they are deliberately different:
    [`expected/blocks/`](expected/blocks). This pins where each block starts
    and ends. Two readings can agree on *how many* blocks a file has and still
    disagree about *where* one of them begins, and only this catches that.
+3. **Model profiles**, compared to [`expected/models.txt`](expected/models.txt).
+   A stand-in Codex executable supplies a fixed catalog. Temporary XDG config
+   and cache roots prove discovery and `--add-model` without touching the
+   developer's files; the full resulting `agents.toml` pins that an existing
+   profile stays above the appended block. A small harness also pins argv
+   expansion with model and effort together, each independently, and both absent.
+   Placeholder-looking text inside supplied values stays literal.
+4. **Model edge cases**, compared to
+   [`expected/model-edges.txt`](expected/model-edges.txt). Fixtures in
+   [`models/`](models/) pin all five CLI parsers, visibility filtering, defaults
+   and effort levels. The harness checks reserved names, invalid TOML, exact
+   byte preservation, partial-write rollback and failed cache saves. It runs
+   the actual picker in Qt's JavaScript engine with a minimal DOM adapter to
+   check editing, Refresh and replies arriving out of order. This uses Galley's
+   existing Qt dependency; no browser, Node or installed agent is required.
 
 ## The fixture book
 
@@ -77,6 +92,6 @@ had to look at and agree to.
 
 `--check` and `--blocks` exercise `Document`, `BlockScanner` and `Footnotes`.
 They do not touch `Round`, `Brief`, `Snapshot`, `Project`'s build-script
-inference, `AgentProfiles`, `Bridge`, or any of `web/app.js` — including the
-anchor capture that is the other half of the anchoring contract. Those have no
-tests yet.
+inference, `Bridge`, or the anchor capture in `web/app.js` that is the other
+half of the anchoring contract. The model tests cover `AgentProfiles`,
+`ModelDiscovery` and picker state; they do not exercise rendering in WebEngine.

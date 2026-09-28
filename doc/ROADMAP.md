@@ -19,6 +19,9 @@ read the diff, go round again.
 - **Rounds** — immutable, carry-forward, full history
 - **Dispatch** — any agent CLI, brief shown before sending, live log,
   result diff; a run that changes nothing leaves the round open
+- **Model profiles** — models and reasoning effort selected in the dispatch
+  pane from each installed CLI's own catalog, cached only after an explicit
+  refresh and appended to the user-editable profile file
 - **Footnotes** — pandoc `[^label]` references and definitions, numbered by
   first reference, anchors namespaced per chapter so they stay unique when the
   book is concatenated; footnotes are commentable like any other block, and
@@ -48,7 +51,8 @@ read the diff, go round again.
   the result view pairs every comment with that answer; an unanswered comment
   is flagged, never assumed applied
 - **PDF** — runs the book's own build script
-- **Command line** — `--check`, `--blocks`, `--brief`, `--dispatch`
+- **Command line** — `--check`, `--blocks`, `--brief`, `--dispatch`,
+  `--models`, `--add-model`
 
 ## Next
 

@@ -49,9 +49,10 @@ mapping, you have fixed the list-marker bug it documents. Move its cases into
 ## What is not under test
 
 `make check` exercises `Document`, `BlockScanner` and `Footnotes` over the
-fixture book. It does not reach `Round`, `Brief`, `Snapshot`, `Project`'s
-build-script inference, `AgentProfiles`, `Bridge` or any of `web/app.js` —
-including the anchor capture that is the other half of the anchoring contract.
+fixture book, plus model discovery, profile appending and argv expansion with
+an isolated stand-in CLI. It does not reach `Round`, `Brief`, `Snapshot`,
+`Project`'s build-script inference, `Bridge` or any of `web/app.js` — including
+the anchor capture that is the other half of the anchoring contract.
 
 A patch to any of those is reviewed by reading it, so keep it small and say in
 the commit message what you did to convince yourself it works. A fixture or a

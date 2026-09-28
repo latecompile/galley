@@ -1,0 +1,45 @@
+codex models — refreshed <time>
+  GPT Test [gpt-test]
+    efforts: low (default), high
+{
+    "agents": {
+        "codex": {
+            "agent": "codex",
+            "effortMode": "list",
+            "models": [
+                {
+                    "default": false,
+                    "defaultEffort": "low",
+                    "displayName": "GPT Test",
+                    "efforts": [
+                        "low",
+                        "high"
+                    ],
+                    "id": "gpt-test"
+                }
+            ],
+            "refreshedAt": "<time>"
+        }
+    },
+    "version": 1
+}
+added    codex-gpt-test-high
+existing codex-gpt-test-high
+
+# Existing hand-written profile.
+[claude]
+model = "opus"
+command = ["claude", "-p", "--model", "{model}", "{prompt}"]
+
+# Added by Galley's model picker, <date>
+[codex-gpt-test-high]
+model = "gpt-test"
+effort = "high"
+command = ["codex", "exec", "--sandbox", "workspace-write", "-m", "{model}", "-c", "model_reasoning_effort=\"{effort}\"", "{prompt}"]
+
+label: codex-gpt-test-high
+model and effort: codex | exec | --sandbox | workspace-write | -m | gpt-test | -c | model_reasoning_effort="high" | PROMPT | BRIEF | ROOT
+model only: codex | exec | --sandbox | workspace-write | -m | gpt-test | PROMPT | BRIEF | ROOT
+effort only: codex | exec | --sandbox | workspace-write | -c | model_reasoning_effort="high" | PROMPT | BRIEF | ROOT
+neither: codex | exec | --sandbox | workspace-write | PROMPT | BRIEF | ROOT
+literal placeholders: codex | exec | --sandbox | workspace-write | -m | gpt-{effort} | -c | model_reasoning_effort="high-{model}" | Keep {model} and {effort}. | BRIEF/{model} | ROOT/{effort}

@@ -13,6 +13,7 @@ class QWidget;
 
 class PdfExporter;
 class ProcessRunner;
+class ModelDiscovery;
 class Theme;
 
 // The entire C++ ↔ JS contract.
@@ -42,6 +43,14 @@ public slots:
     QString briefPreview(const QString &idsJson);
     // Adds profiles for agents installed since agents.toml was written.
     QString rescanAgents();
+    // Model discovery is explicit and asynchronous. This call returns cached
+    // catalogs; refreshModels later emits modelsRefreshed.
+    QString modelPickerJson();
+    void refreshModels(const QString &agent);
+    QString modelProfileName(const QString &agent, const QString &model,
+                             const QString &effort);
+    QString addModelProfile(const QString &agent, const QString &model,
+                            const QString &effort);
     // The book's own reference list, which every brief carries.
     void setProjectReferences(const QString &json);
     QString resultJson(int roundNumber);
@@ -90,6 +99,7 @@ signals:
     void runStarted(const QString &label);
     void runProgress(int seconds, const QString &pretty);
     void runFinished(int exitCode, const QString &diff);
+    void modelsRefreshed(const QString &json);
     void status(const QString &level, const QString &message);
 
 private:
@@ -105,6 +115,7 @@ private:
     Theme *m_theme;
     Round m_round;
     ProcessRunner *m_agent;
+    ModelDiscovery *m_models;
     PdfExporter *m_pdf;
     QHash<QString, Document *> m_docs;
     QStringList m_log;

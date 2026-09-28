@@ -12,7 +12,9 @@
 // strictly less capable.
 struct AgentProfile {
     QString name;
-    QStringList command;  // {prompt}, {brief} and {root} are substituted
+    QString model;
+    QString effort;
+    QStringList command;  // {prompt}, {brief}, {root}, {model} and {effort} are substituted
 };
 
 namespace AgentProfiles {
@@ -29,6 +31,20 @@ QString omarchyDefault();
 // for them. Returns the names added. Never touches what is already there —
 // the file belongs to whoever edited it last, which is usually not Galley.
 QStringList rescan();
+
+// Model profiles are always appended to agents.toml. The returned name is an
+// existing exact match, or the name of the profile that was added. Empty on
+// failure, with a human-readable explanation in error.
+QString addModel(const QString &agent, const QString &model, const QString &effort,
+                 bool *alreadyExisted, QString *error);
+QString modelProfileName(const QString &agent, const QString &model, const QString &effort,
+                         bool *alreadyExists = nullptr, QString *error = nullptr);
+
+// Model-capable CLIs Galley can currently find, and the text shown anywhere a
+// profile is listed.
+QStringList installedModelAgents();
+bool supportsModelAgent(const QString &agent);
+QString label(const AgentProfile &profile);
 
 QStringList expand(const AgentProfile &p, const QString &prompt, const QString &brief,
                    const QString &root);

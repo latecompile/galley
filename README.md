@@ -188,12 +188,21 @@ finds on your PATH — so the list is yours, not a guess:
 [claude]
 command = ["claude", "-p", "--permission-mode", "acceptEdits", "{prompt}"]
 
+[claude-opus]
+model = "opus"
+effort = "high"
+command = ["claude", "-p", "--model", "{model}", "--effort", "{effort}", "--permission-mode", "acceptEdits", "{prompt}"]
+
 [grok]
 command = ["grok", "-p", "{prompt}", "--permission-mode", "acceptEdits", "--allow", "Write", "--allow", "Edit"]
 ```
 
-`{prompt}`, `{brief}` and `{root}` are substituted. Add whatever CLI you use,
-in the same shape; the name is yours to choose.
+`{prompt}`, `{brief}`, `{root}`, `{model}` and `{effort}` are substituted. The
+last two come from optional `model` and `effort` keys. When either is empty,
+its argument and preceding flag are omitted, so one command works both with a
+pinned choice and with the CLI default. Add whatever CLI you use, in the same
+shape; the profile name is yours to choose. Agent lists show the profile,
+adding model and effort only when they are not already in its name.
 
 These run with nobody watching, so an agent that stops to ask permission
 cannot be answered — it just reports back having changed nothing. Each profile
@@ -205,6 +214,18 @@ Installed an agent since? `galley --agents`, or **Rescan** in the dispatch
 pane, adds profiles for anything new. Neither ever touches what is already in
 the file — so if you do not want an agent offered, comment it out rather than
 deleting it, and a rescan will leave it alone.
+
+**Add a model** in the dispatch pane creates another profile for an installed
+Claude, Codex, Grok, OpenCode or Gemini CLI. **Refresh** asks that CLI for its
+current model choices; Galley never carries its own model catalog. Successful
+results and their timestamps are cached in `~/.cache/galley/models.json`, and
+only an explicit refresh runs a CLI. A failed refresh explains the failure,
+keeps any older cached choices, and leaves model-name entry available.
+
+New profiles are appended to `agents.toml`, after everything already there,
+with a dated `Added by Galley's model picker` comment. Galley does not rewrite,
+reorder or remove profiles. Names use `agent-model-effort`, with punctuation
+folded to hyphens and a numeric suffix if needed.
 
 Grok needs explicit `--allow Write` and `--allow Edit` flags to write files
 in non-interactive mode; `--permission-mode acceptEdits` alone leaves it
@@ -227,6 +248,8 @@ galley --html FILE BOOK       # print a chapter's rendered HTML
 galley --brief BOOK           # print the open round's brief to stdout
 galley --proof BOOK           # render the book to .galley/proof.pdf
 galley --agents               # list agent profiles, adding any newly installed
+galley --models codex         # refresh and list models from the codex CLI
+galley --add-model codex --model gpt-6-sol --effort high
 galley --dispatch BOOK        # send the open round to an agent, from the terminal
 galley --dispatch --only c-0001,c-0004 BOOK
 galley --dispatch --agent codex BOOK

@@ -1,0 +1,4 @@
+Available models:
+  - grok-test
+  - grok-default (default)
+Default model: grok-default

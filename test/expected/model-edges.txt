@@ -1,0 +1,27 @@
+ok reserved names, exact original bytes, duplicate reuse
+ok invalid TOML rejected before preview or append
+ok partial append rejected and rolled back
+codex models
+  GPT Test [gpt-test]
+    efforts: low (default), high
+  Other [gpt-other]
+    efforts: medium (default)
+grok models
+  grok-test
+* grok-default
+claude models
+  fable
+  opus
+  sonnet
+  efforts: low, medium, high, max
+opencode models
+  anthropic/claude-test
+  openai/gpt-test
+gemini models
+  Gemini does not expose a model list; enter a model name.
+ok CLI parsers reject malformed discovery output
+ok discovery failure retains cache; cache write failure is reported
+ok --models returns failure when the cache cannot be saved
+ok picker preserves model and effort through typing and refresh
+ok picker ignores stale previews after edits, redraws and close
+ok picker uses per-model and CLI-wide efforts; preview errors disable Add

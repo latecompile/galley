@@ -2,6 +2,7 @@
 
 #include "AgentProfiles.h"
 #include "Brief.h"
+#include "ModelDiscovery.h"
 #include "PdfExporter.h"
 #include "ProcessRunner.h"
 #include "Snapshot.h"
@@ -114,6 +115,7 @@ Bridge::Bridge(Project *project, Theme *theme, QObject *parent)
     , m_project(project)
     , m_theme(theme)
     , m_agent(new ProcessRunner(this))
+    , m_models(new ModelDiscovery(this))
     , m_pdf(new PdfExporter(this))
 {
     m_round = Round::loadOrCreateOpen(m_project->galleyDir());
@@ -121,6 +123,7 @@ Bridge::Bridge(Project *project, Theme *theme, QObject *parent)
     connect(m_theme, &Theme::changed, this, [this](const QJsonObject &o) {
         emit themeChanged(toJson(o));
     });
+    connect(m_models, &ModelDiscovery::finished, this, &Bridge::modelsRefreshed);
 
     for (ProcessRunner *r : {m_agent}) {
         connect(r, &ProcessRunner::started, this, [this](const QString &cmd) {
@@ -200,9 +203,12 @@ QString Bridge::projectJson()
     }
 
     QJsonArray agents;
+    QJsonObject agentLabels;
     const auto profiles = AgentProfiles::load();
-    for (auto it = profiles.begin(); it != profiles.end(); ++it)
+    for (auto it = profiles.begin(); it != profiles.end(); ++it) {
         agents << it.key();
+        agentLabels[it.key()] = AgentProfiles::label(it.value());
+    }
 
     const QString chosen = resolveAgent(profiles, m_project->defaultAgent());
 
@@ -211,6 +217,7 @@ QString Bridge::projectJson()
         {QStringLiteral("root"), m_project->root()},
         {QStringLiteral("chapters"), chapters},
         {QStringLiteral("agents"), agents},
+        {QStringLiteral("agentLabels"), agentLabels},
         {QStringLiteral("defaultAgent"), chosen},
         {QStringLiteral("desktopAgent"), AgentProfiles::omarchyDefault()},
         {QStringLiteral("references"), QJsonArray::fromStringList(m_project->references())},
@@ -305,6 +312,54 @@ QString Bridge::rescanAgents()
     const QStringList added = AgentProfiles::rescan();
     QJsonArray names = QJsonArray::fromStringList(added);
     return toJson(QJsonObject{{QStringLiteral("added"), names},
+                              {QStringLiteral("path"), AgentProfiles::configPath()}});
+}
+
+QString Bridge::modelPickerJson()
+{
+    QJsonArray agents;
+    for (const QString &name : AgentProfiles::installedModelAgents()) {
+        agents << QJsonObject{{QStringLiteral("name"), name},
+                              {QStringLiteral("catalog"), ModelDiscovery::cached(name)}};
+    }
+    return toJson(QJsonObject{{QStringLiteral("agents"), agents},
+                              {QStringLiteral("cachePath"), ModelDiscovery::cachePath()}});
+}
+
+void Bridge::refreshModels(const QString &agent)
+{
+    m_models->refresh(agent);
+}
+
+QString Bridge::modelProfileName(const QString &agent, const QString &model,
+                                 const QString &effort)
+{
+    bool exists = false;
+    QString error;
+    const QString name = AgentProfiles::modelProfileName(agent, model.trimmed(),
+                                                          effort.trimmed(), &exists, &error);
+    if (name.isEmpty())
+        return toJson(QJsonObject{{QStringLiteral("error"), error}});
+    return toJson(QJsonObject{{QStringLiteral("name"), name},
+                              {QStringLiteral("exists"), exists}});
+}
+
+QString Bridge::addModelProfile(const QString &agent, const QString &model,
+                                const QString &effort)
+{
+    bool existed = false;
+    QString error;
+    const QString name = AgentProfiles::addModel(agent, model, effort, &existed, &error);
+    if (name.isEmpty())
+        return toJson(QJsonObject{{QStringLiteral("ok"), false},
+                                  {QStringLiteral("error"), error}});
+
+    const AgentProfile profile = AgentProfiles::load().value(name);
+    emit bookChanged(projectJson());
+    return toJson(QJsonObject{{QStringLiteral("ok"), true},
+                              {QStringLiteral("name"), name},
+                              {QStringLiteral("label"), AgentProfiles::label(profile)},
+                              {QStringLiteral("existed"), existed},
                               {QStringLiteral("path"), AgentProfiles::configPath()}});
 }
 
