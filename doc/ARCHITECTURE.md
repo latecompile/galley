@@ -342,10 +342,16 @@ are substituted into an argv list. Adding an agent is three lines of TOML.
 Because these run non-interactively, an agent that pauses to ask permission
 cannot be answered — it reports back having changed nothing. Profiles
 therefore grant file editing up front (`--permission-mode acceptEdits` for
-claude, `--sandbox workspace-write` for codex) and no more: applying an
-editorial review needs to read and write Markdown and nothing else. The
-child's stdin is closed at start, since agents that accept piped input
-otherwise block waiting for it.
+claude, `--sandbox workspace-write` for codex, and
+`--permission-mode acceptEdits --allow Write --allow Edit` for grok) and no
+more: applying an editorial review needs to read and write Markdown and
+nothing else. The child's stdin is closed at start, since agents that accept
+piped input otherwise block waiting for it.
+
+Defaults are used when profiles are first written; existing entries in
+`~/.config/galley/agents.toml` are left alone, including on rescan. An older
+grok profile with only `--permission-mode acceptEdits` needs its `--allow`
+flags added manually, as shown in the [README](../README.md#agents).
 
 `galley --dispatch` runs this identical path headlessly and exits with the
 agent's exit code, which is both a terminal-first workflow and how both

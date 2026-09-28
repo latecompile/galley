@@ -187,6 +187,9 @@ finds on your PATH — so the list is yours, not a guess:
 ```toml
 [claude]
 command = ["claude", "-p", "--permission-mode", "acceptEdits", "{prompt}"]
+
+[grok]
+command = ["grok", "-p", "{prompt}", "--permission-mode", "acceptEdits", "--allow", "Write", "--allow", "Edit"]
 ```
 
 `{prompt}`, `{brief}` and `{root}` are substituted. Add whatever CLI you use,
@@ -202,6 +205,13 @@ Installed an agent since? `galley --agents`, or **Rescan** in the dispatch
 pane, adds profiles for anything new. Neither ever touches what is already in
 the file — so if you do not want an agent offered, comment it out rather than
 deleting it, and a rescan will leave it alone.
+
+Grok needs explicit `--allow Write` and `--allow Edit` flags to write files
+in non-interactive mode; `--permission-mode acceptEdits` alone leaves it
+unable to edit. The corrected default is used for newly written profiles.
+Existing `~/.config/galley/agents.toml` files keep their grok command, even
+after a rescan: update the `[grok]` command manually to match the example
+above. Galley does not migrate existing profiles.
 
 Which one a dispatch uses: `[agent] default` in the book's `project.toml` if
 set, otherwise the agent you chose for the Omarchy desktop, otherwise the

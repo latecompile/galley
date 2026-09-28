@@ -28,7 +28,7 @@ struct KnownAgent {
 const KnownAgent kKnown[] = {
     {"claude", R"(["claude", "-p", "--permission-mode", "acceptEdits", "{prompt}"])", true, nullptr},
     {"codex", R"(["codex", "exec", "--sandbox", "workspace-write", "{prompt}"])", true, nullptr},
-    {"grok", R"(["grok", "-p", "{prompt}", "--permission-mode", "acceptEdits"])", true, nullptr},
+    {"grok", R"(["grok", "-p", "{prompt}", "--permission-mode", "acceptEdits", "--allow", "Write", "--allow", "Edit"])", true, nullptr},
     {"gemini", R"(["gemini", "--approval-mode", "auto_edit", "-p", "{prompt}"])", true, nullptr},
     {"opencode", R"(["opencode", "run", "{prompt}"])", true, nullptr},
     {"crush", R"(["crush", "run", "-y", "{prompt}"])", false,
